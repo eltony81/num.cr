@@ -21,10 +21,13 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y liblapack-dev libcblas-dev libopencl1-1 mesa-opencl-icd ocl-icd-opencl-dev
+        sudo apt-get install -y liblapack-dev libcblas-dev libopencl1 ocl-icd-opencl-dev pocl-opencl-icd
 
     - name: Install shards
       run: shards install
 
     - name: Run tests
-      run: crystal spec
+      run: |
+        # We define a dummy OpenCL device for CI if needed
+        # but pocl-opencl-icd should provide one.
+        crystal spec
