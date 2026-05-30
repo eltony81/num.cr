@@ -40,7 +40,7 @@ macro lapack(fn, *args, worksize = nil)
   end
 end
 
-class Num::Tensor(T, S)
+class Tensor(T, S)
   # Solve a linear matrix equation, or system of linear scalar equations.
   def solve(x : Tensor(T, S))
     self.assert_square_matrix
