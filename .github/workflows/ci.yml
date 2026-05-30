@@ -21,13 +21,20 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y liblapack-dev libcblas-dev libopencl1 ocl-icd-opencl-dev pocl-opencl-icd
+        sudo apt-get install -y \
+          liblapack-dev \
+          libopenblas-dev \
+          libclblast-dev \
+          libopencl1 \
+          ocl-icd-opencl-dev \
+          pocl-opencl-icd \
+          libarrow-dev \
+          libglib2.0-dev
 
     - name: Install shards
-      run: shards install
+      run: shards install --ignore-crystal-version
 
     - name: Run tests
       run: |
-        # We define a dummy OpenCL device for CI if needed
-        # but pocl-opencl-icd should provide one.
-        crystal spec
+        # Run specs with verbose output to debug failures
+        crystal spec -v
