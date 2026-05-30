@@ -100,7 +100,7 @@ class Tensor(T, S)
     self.assert_square_matrix
     a = dup(Num::ColMajor)
     n = a.shape[0]
-    lapack(potrf, "L".ord.to_u8, n, a.get_offset_ptr_c, n)
+    lapack(potrf, 'L'.ord.to_u8, n, a.get_offset_ptr_c, n)
     n.times do |i|
       (0...i).each do |j|
         a[j, i] = T.zero
@@ -141,8 +141,8 @@ class Tensor(T, S)
     work_size = {3 * k + {m, n}.max, 5 * k}.max
     lapack(
       gesvd,
-      "A".ord.to_u8,
-      "A".ord.to_u8,
+      'A'.ord.to_u8,
+      'A'.ord.to_u8,
       m,
       n,
       a.get_offset_ptr_c,
@@ -165,8 +165,8 @@ class Tensor(T, S)
     w = Tensor(T, S).new([n])
     lapack(
       syev,
-      "V".ord.to_u8,
-      "L".ord.to_u8,
+      'V'.ord.to_u8,
+      'L'.ord.to_u8,
       n,
       a.get_offset_ptr_c,
       n,
@@ -185,7 +185,7 @@ class Tensor(T, S)
     wi = wr.dup
     vl = Tensor(T, S).new([n, n])
     vr = vl.dup
-    lapack(geev, "N".ord.to_u8, "V".ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
+    lapack(geev, 'N'.ord.to_u8, 'V'.ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
       wi.get_offset_ptr_c, vl.get_offset_ptr_c, n, vr.get_offset_ptr_c, n, worksize: 4 * n)
     
     # Combine wr and wi into Complex
@@ -201,7 +201,7 @@ class Tensor(T, S)
     a = dup(Num::ColMajor)
     n = a.shape[0]
     w = Tensor(T, S).new([n])
-    lapack(syev, "N".ord.to_u8, "L".ord.to_u8, n, a.get_offset_ptr_c, n, w.get_offset_ptr_c, worksize: 3 * n - 1)
+    lapack(syev, 'N'.ord.to_u8, 'L'.ord.to_u8, n, a.get_offset_ptr_c, n, w.get_offset_ptr_c, worksize: 3 * n - 1)
     w
   end
 
@@ -215,7 +215,7 @@ class Tensor(T, S)
     vl_dummy = Tensor(T, S).new([1, 1])
     vr_dummy = Tensor(T, S).new([1, 1])
     
-    lapack(geev, "N".ord.to_u8, "N".ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
+    lapack(geev, 'N'.ord.to_u8, 'N'.ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
       wi.get_offset_ptr_c, vl_dummy.get_offset_ptr_c, 1, vr_dummy.get_offset_ptr_c, 1, worksize: 4 * n)
     
     res = Array(Complex).new(n)
