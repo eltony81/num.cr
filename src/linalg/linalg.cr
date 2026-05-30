@@ -25,23 +25,27 @@ require "./extension"
 require "./work"
 require "complex"
 
-# Helper for calling lapack functions
-macro lapack(fn, *args, worksize = nil)
-  info = 0
-  {% if worksize %}
-    lwork = ({{worksize}}).to_i
-    work = Pointer(T).malloc(lwork)
-    LibLapack.{{fn.id}}({{*args}}, work, pointerof(lwork), pointerof(info))
-  {% else %}
-    LibLapack.{{fn.id}}({{*args}}, pointerof(info))
-  {% end %}
-  if info != 0
-    raise Num::Exceptions::LapackException.new(info, "{{fn.id}}")
-  end
-end
-
 class Tensor(T, S)
-  # Solve a linear matrix equation, or system of linear scalar equations.
+  def matmul(other : Tensor(T, S))
+    self.assert_is_matrix
+    other.assert_is_matrix
+    if self.shape[1] != other.shape[0]
+      raise "Matrix dimensions must agree"
+    end
+    m = self.shape[0]
+    k = self.shape[1]
+    n = other.shape[1]
+    res = Tensor(T, S).new([m, n])
+    
+    # Use direct BLAS call to avoid macro expansion issues
+    {% if T == Float32 %}
+      LibCblas.sgemm(LibCblas::ROW_MAJOR, LibCblas::CblasNoTrans, LibCblas::CblasNoTrans, m, n, k, 1.0_f32, self.get_offset_ptr_c, k, other.get_offset_ptr_c, n, 0.0_f32, res.get_offset_ptr_c, n)
+    {% elsif T == Float64 %}
+      LibCblas.dgemm(LibCblas::ROW_MAJOR, LibCblas::CblasNoTrans, LibCblas::CblasNoTrans, m, n, k, 1.0_f64, self.get_offset_ptr_c, k, other.get_offset_ptr_c, n, 0.0_f64, res.get_offset_ptr_c, n)
+    {% end %}
+    res
+  end
+
   def solve(x : Tensor(T, S))
     self.assert_square_matrix
     a = dup(Num::ColMajor)
@@ -53,7 +57,6 @@ class Tensor(T, S)
     x
   end
 
-  # Compute Hessenberg form of a matrix.
   def hessenberg
     self.assert_square_matrix
     n = @shape[0]
@@ -72,19 +75,16 @@ class Tensor(T, S)
     {h, a}
   end
 
-  # Compute the sign of a matrix.
   def sign
     self.assert_square_matrix
     self
   end
 
-  # Compute the square root of a matrix.
   def sqrt
     self.assert_square_matrix
     self
   end
 
-  # Compute the inverse of a matrix.
   def inv
     self.assert_square_matrix
     a = dup(Num::ColMajor)
@@ -95,7 +95,6 @@ class Tensor(T, S)
     a
   end
 
-  # Compute the Cholesky decomposition of a matrix.
   def cholesky
     self.assert_square_matrix
     a = dup(Num::ColMajor)
@@ -109,7 +108,6 @@ class Tensor(T, S)
     a
   end
 
-  # Compute the QR decomposition of a matrix.
   def qr
     self.assert_is_matrix
     m, n = @shape
@@ -128,7 +126,6 @@ class Tensor(T, S)
     {a, r}
   end
 
-  # Compute the singular value decomposition of a matrix.
   def svd
     self.assert_is_matrix
     m, n = @shape
@@ -157,7 +154,6 @@ class Tensor(T, S)
     {u, s, v}
   end
 
-  # Compute the eigenvalues and eigenvectors of a symmetric matrix.
   def eigh
     self.assert_square_matrix
     a = dup(Num::ColMajor)
@@ -176,7 +172,6 @@ class Tensor(T, S)
     {w, a}
   end
 
-  # Compute the eigenvalues and right eigenvectors of a square array.
   def eig
     self.assert_square_matrix
     a = dup(Num::ColMajor)
@@ -185,10 +180,9 @@ class Tensor(T, S)
     wi = wr.dup
     vl = Tensor(T, S).new([n, n])
     vr = vl.dup
-    lapack(geev, "N".ord.to_u8, "V".ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
+    lapack(geev, 'N'.ord.to_u8, 'V'.ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
       wi.get_offset_ptr_c, vl.get_offset_ptr_c, n, vr.get_offset_ptr_c, n, worksize: 4 * n)
     
-    # Combine wr and wi into Complex
     res_w = Array(Complex).new(n)
     n.times do |i|
       res_w << Complex.new(wr[i].value, wi[i].value)
@@ -205,7 +199,6 @@ class Tensor(T, S)
     w
   end
 
-  # Compute the eigenvalues of a general matrix.
   def eigvals
     self.assert_square_matrix
     a = self.dup(Num::ColMajor)
@@ -215,7 +208,7 @@ class Tensor(T, S)
     vl_dummy = Tensor(T, S).new([1, 1])
     vr_dummy = Tensor(T, S).new([1, 1])
     
-    lapack(geev, "N".ord.to_u8, "N".ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
+    lapack(geev, 'N'.ord.to_u8, 'N'.ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
       wi.get_offset_ptr_c, vl_dummy.get_offset_ptr_c, 1, vr_dummy.get_offset_ptr_c, 1, worksize: 4 * n)
     
     res = Array(Complex).new(n)
@@ -225,33 +218,27 @@ class Tensor(T, S)
     res
   end
 
-  # Matrix norm
   def norm(order : String = "fro")
     self.assert_is_matrix
     T.zero
   end
 
-  # :nodoc:
   def is_f_contiguous
     @flags.fortran?
   end
 
-  # :nodoc:
   def is_c_contiguous
     @flags.contiguous?
   end
 
-  # :nodoc:
   def assert_square_matrix
     raise "Input must be a square matrix" unless self.rank == 2 && self.shape[0] == self.shape[1]
   end
 
-  # :nodoc:
   def assert_is_vector
     raise "Inputs must be vectors" unless self.rank == 1
   end
 
-  # :nodoc:
   def assert_is_matrix
     raise "Input must be a matrix" unless self.rank == 2
   end
