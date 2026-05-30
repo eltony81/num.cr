@@ -9,41 +9,14 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    container: crystaldata/numci
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install Crystal
-      uses: crystal-lang/install-crystal@v1
-      with:
-        crystal: latest
-
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          liblapack-dev \
-          libopenblas-dev \
-          libcblas-dev \
-          libclblast-dev \
-          libopencl1 \
-          ocl-icd-opencl-dev \
-          pocl-opencl-icd \
-          libarrow-dev \
-          libglib2.0-dev
-
     - name: Install shards
       run: shards install --ignore-crystal-version
 
-    - name: Debug Environment
-      run: |
-        echo "--- Searching for blas libraries ---"
-        find /usr/lib -name "*blas*" | grep ".so"
-        echo "--- pkg-config status ---"
-        pkg-config --libs openblas || echo "openblas not in pkg-config"
-        pkg-config --libs cblas || echo "cblas not in pkg-config"
-
     - name: Run tests
       run: |
-        # Force openblas flag
-        crystal spec -v -Dopenblas
+        crystal spec -v
