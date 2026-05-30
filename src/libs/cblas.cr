@@ -1,5 +1,5 @@
 {% if flag?(:openblas) %}
-  @[Link("cblas")]
+  @[Link("openblas")]
 {% elsif flag?(:accelerate) %}
   @[Link(framework: "Accelerate")]
 {% elsif flag?(:darwin) %}
@@ -49,12 +49,14 @@ lib LibCblas
     CblasRight = 142
   end
 
+  # OpenBLAS specific extensions
   fun set_num_threads = openblas_set_num_threads(num_threads : LibC::Int)
   fun get_num_threads = openblas_get_num_threads : LibC::Int
   fun get_num_procs = openblas_get_num_procs : LibC::Int
   fun get_config = openblas_get_config : LibC::Char*
   fun get_corename = openblas_get_corename : LibC::Char*
   fun get_parallel = openblas_get_parallel : LibC::Int
+
   fun sdsdot = cblas_sdsdot(n : Blasint, alpha : LibC::Float, x : LibC::Float*, incx : Blasint, y : LibC::Float*, incy : Blasint) : LibC::Float
   fun dsdot = cblas_dsdot(n : Blasint, x : LibC::Float*, incx : Blasint, y : LibC::Float*, incy : Blasint) : LibC::Double
   fun sdot = cblas_sdot(n : Blasint, x : LibC::Float*, incx : Blasint, y : LibC::Float*, incy : Blasint) : LibC::Float
@@ -128,7 +130,7 @@ lib LibCblas
   fun cher = cblas_cher(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Float, x : LibC::Float*, inc_x : Blasint, a : LibC::Float*, lda : Blasint)
   fun zher = cblas_zher(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Double, x : LibC::Double*, inc_x : Blasint, a : LibC::Double*, lda : Blasint)
   fun ssyr2 = cblas_ssyr2(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Float, x : LibC::Float*, inc_x : Blasint, y : LibC::Float*, inc_y : Blasint, a : LibC::Float*, lda : Blasint)
-  fun dsyr2 = cblas_dsyr2(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Double, x : LibC::Double*, inc_x : Blasint, y : LibC::Double*, inc_y : Blasint, a : LibC::Double*, lda : Blasint)
+  fun dsyr2 = cblas_dsyr2(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Double, x : LibC::Double*, inc_x : Blasint, y : LibC::Double*, inc_y : Blasint, a : LibC::Float*, lda : Blasint)
   fun cher2 = cblas_cher2(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Float*, x : LibC::Float*, inc_x : Blasint, y : LibC::Float*, inc_y : Blasint, a : LibC::Float*, lda : Blasint)
   fun zher2 = cblas_zher2(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Double*, x : LibC::Double*, inc_x : Blasint, y : LibC::Double*, inc_y : Blasint, a : LibC::Double*, lda : Blasint)
   fun sgbmv = cblas_sgbmv(order : MatrixLayout, trans_a : CblasTranspose, m : Blasint, n : Blasint, kl : Blasint, ku : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint, beta : LibC::Float, y : LibC::Float*, inc_y : Blasint)
@@ -138,21 +140,21 @@ lib LibCblas
   fun ssbmv = cblas_ssbmv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, k : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint, beta : LibC::Float, y : LibC::Float*, inc_y : Blasint)
   fun dsbmv = cblas_dsbmv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, k : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint, beta : LibC::Double, y : LibC::Double*, inc_y : Blasint)
   fun stbmv = cblas_stbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
-  fun dtbmv = cblas_dtbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
+  fun dtbmv = cblas_dtbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
   fun ctbmv = cblas_ctbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
-  fun ztbmv = cblas_ztbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
-  fun stbsv = cblas_stbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
-  fun dtbsv = cblas_dtbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
-  fun ctbsv = cblas_ctbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
-  fun ztbsv = cblas_ztbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
+  fun ztbmv = cblas_ztbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
+  fun stbsv = cblas_stbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
+  fun dtbsv = cblas_dtbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
+  fun ctbsv = cblas_ctbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
+  fun ztbsv = cblas_ztbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
   fun stpmv = cblas_stpmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Float*, x : LibC::Float*, inc_x : Blasint)
   fun dtpmv = cblas_dtpmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Double*, x : LibC::Double*, inc_x : Blasint)
   fun ctpmv = cblas_ctpmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Float*, x : LibC::Float*, inc_x : Blasint)
-  fun ztpmv = cblas_ztpmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Double*, x : LibC::Double*, inc_x : Blasint)
+  fun ztpmv = cblas_ztpmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Double*, x : LibC::Float*, inc_x : Blasint)
   fun stpsv = cblas_stpsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Float*, x : LibC::Float*, inc_x : Blasint)
   fun dtpsv = cblas_dtpsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Double*, x : LibC::Double*, inc_x : Blasint)
   fun ctpsv = cblas_ctpsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Float*, x : LibC::Float*, inc_x : Blasint)
-  fun ztpsv = cblas_ztpsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Double*, x : LibC::Double*, inc_x : Blasint)
+  fun ztpsv = cblas_ztpsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Double*, x : LibC::Float*, inc_x : Blasint)
   fun ssymv = cblas_ssymv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint, beta : LibC::Float, y : LibC::Float*, inc_y : Blasint)
   fun dsymv = cblas_dsymv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint, beta : LibC::Double, y : LibC::Double*, inc_y : Blasint)
   fun chemv = cblas_chemv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, alpha : LibC::Float*, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint, beta : LibC::Float*, y : LibC::Float*, inc_y : Blasint)
@@ -182,7 +184,7 @@ lib LibCblas
   fun csymm = cblas_csymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : LibC::Float*, a : LibC::Float*, lda : Blasint, b : LibC::Float*, ldb : Blasint, beta : LibC::Float*, c : LibC::Float*, ldc : Blasint)
   fun zsymm = cblas_zsymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : ComplexDouble*, a : ComplexDouble*, lda : Blasint, b : ComplexDouble*, ldb : Blasint, beta : ComplexDouble*, c : ComplexDouble*, ldc : Blasint)
   fun ssyrk = cblas_ssyrk(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, beta : LibC::Float, c : LibC::Float*, ldc : Blasint)
-  fun dsyrk = cblas_dsyrk(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, beta : LibC::Double, c : LibC::Double*, ldc : Blasint)
+  fun dsyrk = cblas_dsyrk(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, beta : LibC::Float, c : LibC::Double*, ldc : Blasint)
   fun csyrk = cblas_csyrk(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Float*, a : LibC::Float*, lda : Blasint, beta : LibC::Float*, c : LibC::Float*, ldc : Blasint)
   fun zsyrk = cblas_zsyrk(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Double*, a : LibC::Double*, lda : Blasint, beta : LibC::Double*, c : LibC::Double*, ldc : Blasint)
   fun ssyr2k = cblas_ssyr2k(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, b : LibC::Float*, ldb : Blasint, beta : LibC::Float, c : LibC::Float*, ldc : Blasint)
@@ -206,18 +208,18 @@ lib LibCblas
   fun xerbla = cblas_xerbla(p : Blasint, rout : LibC::Char*, form : LibC::Char*, ...)
   fun saxpby = cblas_saxpby(n : Blasint, alpha : LibC::Float, x : LibC::Float*, incx : Blasint, beta : LibC::Float, y : LibC::Float*, incy : Blasint)
   fun daxpby = cblas_daxpby(n : Blasint, alpha : LibC::Double, x : LibC::Double*, incx : Blasint, beta : LibC::Double, y : LibC::Double*, incy : Blasint)
-  fun caxpby = cblas_caxpby(n : Blasint, alpha : LibC::Float*, x : LibC::Float*, incx : Blasint, beta : LibC::Float*, y : LibC::Float*, incy : Blasint)
-  fun zaxpby = cblas_zaxpby(n : Blasint, alpha : LibC::Double*, x : LibC::Double*, incx : Blasint, beta : LibC::Double*, y : LibC::Double*, incy : Blasint)
+  fun caxpby = cblas_caxpby(n : Blasint, alpha : LibC::Float*, x : LibC::Float*, incx : Blasint, beta : LibC::Float, y : LibC::Float*, incy : Blasint)
+  fun zaxpby = cblas_zaxpby(n : Blasint, alpha : LibC::Double*, x : LibC::Double*, incx : Blasint, beta : LibC::Double, y : LibC::Double*, incy : Blasint)
   fun somatcopy = cblas_somatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float, a : LibC::Float*, clda : Blasint, b : LibC::Float*, cldb : Blasint)
-  fun domatcopy = cblas_domatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double, a : LibC::Double*, clda : Blasint, b : LibC::Double*, cldb : Blasint)
-  fun comatcopy = cblas_comatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float*, a : LibC::Float*, clda : Blasint, b : LibC::Float*, cldb : Blasint)
-  fun zomatcopy = cblas_zomatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double*, a : LibC::Double*, clda : Blasint, b : LibC::Double*, cldb : Blasint)
-  fun simatcopy = cblas_simatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float, a : LibC::Float*, clda : Blasint, cldb : Blasint)
-  fun dimatcopy = cblas_dimatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double, a : LibC::Double*, clda : Blasint, cldb : Blasint)
-  fun cimatcopy = cblas_cimatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float*, a : LibC::Float*, clda : Blasint, cldb : Blasint)
-  fun zimatcopy = cblas_zimatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double*, a : LibC::Double*, clda : Blasint, cldb : Blasint)
-  fun sgeadd = cblas_sgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Float, a : LibC::Float*, clda : Blasint, cbeta : LibC::Float, c : LibC::Float*, cldc : Blasint)
-  fun dgeadd = cblas_dgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Double, a : LibC::Double*, clda : Blasint, cbeta : LibC::Double, c : LibC::Double*, cldc : Blasint)
-  fun cgeadd = cblas_cgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Float*, a : LibC::Float*, clda : Blasint, cbeta : LibC::Float*, c : LibC::Float*, cldc : Blasint)
-  fun zgeadd = cblas_zgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Double*, a : LibC::Double*, clda : Blasint, cbeta : LibC::Double*, c : LibC::Double*, cldc : Blasint)
+  fun domatcopy = cblas_domatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double, a : LibC::Double*, lda : Blasint, b : LibC::Double*, ldb : Blasint)
+  fun comatcopy = cblas_comatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float*, a : LibC::Float*, clda : Blasint, b : LibC::Float*, ldb : Blasint)
+  fun zomatcopy = cblas_zomatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double*, a : LibC::Double*, lda : Blasint, b : LibC::Double*, ldb : Blasint)
+  fun simatcopy = cblas_simatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float, a : LibC::Float*, clda : Blasint, ldb : Blasint)
+  fun dimatcopy = cblas_dimatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double, a : LibC::Double*, lda : Blasint, ldb : Blasint)
+  fun cimatcopy = cblas_cimatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Float*, a : LibC::Float*, lda : Blasint, ldb : Blasint)
+  fun zimatcopy = cblas_zimatcopy(corder : MatrixLayout, ctrans : CblasTranspose, crows : Blasint, ccols : Blasint, calpha : LibC::Double*, a : LibC::Double*, lda : Blasint, ldb : Blasint)
+  fun sgeadd = cblas_sgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Float, a : LibC::Float*, lda : Blasint, cbeta : LibC::Float, c : LibC::Float*, cldc : Blasint)
+  fun dgeadd = cblas_dgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Double, a : LibC::Double*, lda : Blasint, cbeta : LibC::Double, c : LibC::Double*, cldc : Blasint)
+  fun cgeadd = cblas_cgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Float*, a : LibC::Float*, lda : Blasint, cbeta : LibC::Float*, c : LibC::Float*, cldc : Blasint)
+  fun zgeadd = cblas_zgeadd(corder : MatrixLayout, crows : Blasint, ccols : Blasint, calpha : LibC::Double*, a : LibC::Double*, lda : Blasint, cbeta : LibC::Double*, c : LibC::Double*, cldc : Blasint)
 end
