@@ -25,21 +25,6 @@ require "./extension"
 require "./work"
 require "complex"
 
-# Helper for calling lapack functions
-macro lapack(fn, *args, worksize = nil)
-  info = 0
-  {% if worksize %}
-    lwork = ({{worksize}}).to_i
-    work = Pointer(T).malloc(lwork)
-    LibLapack.{{fn.id}}({{*args}}, work, pointerof(lwork), pointerof(info))
-  {% else %}
-    LibLapack.{{fn.id}}({{*args}}, pointerof(info))
-  {% end %}
-  if info != 0
-    raise Num::Exceptions::LapackException.new(info, "{{fn.id}}")
-  end
-end
-
 class Tensor(T, S)
   # Solve a linear matrix equation, or system of linear scalar equations.
   def solve(x : Tensor(T, S))
@@ -185,7 +170,7 @@ class Tensor(T, S)
     wi = wr.dup
     vl = Tensor(T, S).new([n, n])
     vr = vl.dup
-    lapack(geev, "N".ord.to_u8, "V".ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
+    lapack(geev, 'N'.ord.to_u8, 'V'.ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
       wi.get_offset_ptr_c, vl.get_offset_ptr_c, n, vr.get_offset_ptr_c, n, worksize: 4 * n)
     
     # Combine wr and wi into Complex
@@ -215,7 +200,7 @@ class Tensor(T, S)
     vl_dummy = Tensor(T, S).new([1, 1])
     vr_dummy = Tensor(T, S).new([1, 1])
     
-    lapack(geev, "N".ord.to_u8, "N".ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
+    lapack(geev, 'N'.ord.to_u8, 'N'.ord.to_u8, n, a.get_offset_ptr_c, n, wr.get_offset_ptr_c,
       wi.get_offset_ptr_c, vl_dummy.get_offset_ptr_c, 1, vr_dummy.get_offset_ptr_c, 1, worksize: 4 * n)
     
     res = Array(Complex).new(n)
