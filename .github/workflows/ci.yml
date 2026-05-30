@@ -30,15 +30,11 @@ jobs:
           pocl-opencl-icd \
           libarrow-dev \
           libglib2.0-dev
-        
-        # Brute force fix for -lcblas not being found on some Ubuntu environments
-        # We link libcblas to libopenblas which provides the same symbols
-        sudo ln -sf /usr/lib/x86_64-linux-gnu/libopenblas.so /usr/lib/x86_64-linux-gnu/libcblas.so
-        sudo ln -sf /usr/lib/x86_64-linux-gnu/libopenblas.so /usr/lib/x86_64-linux-gnu/libblas.so
 
     - name: Install shards
       run: shards install --ignore-crystal-version
 
     - name: Run tests
       run: |
-        crystal spec -v
+        # Use -Dopenblas to match the installed libopenblas-dev
+        crystal spec -v -Dopenblas
