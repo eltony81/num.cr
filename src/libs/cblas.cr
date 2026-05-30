@@ -49,12 +49,14 @@ lib LibCblas
     CblasRight = 142
   end
 
+  # OpenBLAS specific extensions
   fun set_num_threads = openblas_set_num_threads(num_threads : LibC::Int)
   fun get_num_threads = openblas_get_num_threads : LibC::Int
   fun get_num_procs = openblas_get_num_procs : LibC::Int
   fun get_config = openblas_get_config : LibC::Char*
   fun get_corename = openblas_get_corename : LibC::Char*
   fun get_parallel = openblas_get_parallel : LibC::Int
+
   fun sdsdot = cblas_sdsdot(n : Blasint, alpha : LibC::Float, x : LibC::Float*, incx : Blasint, y : LibC::Float*, incy : Blasint) : LibC::Float
   fun dsdot = cblas_dsdot(n : Blasint, x : LibC::Float*, incx : Blasint, y : LibC::Float*, incy : Blasint) : LibC::Double
   fun sdot = cblas_sdot(n : Blasint, x : LibC::Float*, incx : Blasint, y : LibC::Float*, incy : Blasint) : LibC::Float
@@ -138,11 +140,11 @@ lib LibCblas
   fun ssbmv = cblas_ssbmv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, k : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint, beta : LibC::Float, y : LibC::Float*, inc_y : Blasint)
   fun dsbmv = cblas_dsbmv(order : MatrixLayout, uplo : CblasUplo, n : Blasint, k : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint, beta : LibC::Double, y : LibC::Double*, inc_y : Blasint)
   fun stbmv = cblas_stbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
-  fun dtbmv = cblas_dtbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
+  fun dtbmv = cblas_dtbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
   fun ctbmv = cblas_ctbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
   fun ztbmv = cblas_ztbmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, k : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
   fun stbsv = cblas_stbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
-  fun dtbsv = cblas_dtbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
+  fun dtbsv = cblas_dtbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
   fun ctbsv = cblas_ctbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Float*, lda : Blasint, x : LibC::Float*, inc_x : Blasint)
   fun ztbsv = cblas_ztbsv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, a : LibC::Double*, lda : Blasint, x : LibC::Double*, inc_x : Blasint)
   fun stpmv = cblas_stpmv(order : MatrixLayout, uplo : CblasUplo, trans_a : CblasTranspose, diag : CblasDiag, n : Blasint, ap : LibC::Float*, x : LibC::Float*, inc_x : Blasint)
@@ -178,7 +180,7 @@ lib LibCblas
   fun zgemm = cblas_zgemm(order : MatrixLayout, trans_a : CblasTranspose, trans_b : CblasTranspose, m : Blasint, n : Blasint, k : Blasint, alpha : ComplexDouble*, a : ComplexDouble*, lda : Blasint, b : ComplexDouble*, ldb : Blasint, beta : ComplexDouble*, c : ComplexDouble*, ldc : Blasint)
   fun zgemm3m = cblas_zgemm3m(order : MatrixLayout, trans_a : CblasTranspose, trans_b : CblasTranspose, m : Blasint, n : Blasint, k : Blasint, alpha : LibC::Double*, a : LibC::Double*, lda : Blasint, b : LibC::Double*, ldb : Blasint, beta : LibC::Double*, c : LibC::Double*, ldc : Blasint)
   fun ssymm = cblas_ssymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, b : LibC::Float*, ldb : Blasint, beta : LibC::Float, c : LibC::Float*, ldc : Blasint)
-  fun dsymm = cblas_dsymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, b : LibC::Double*, ldb : Blasint, beta : LibC::Double, c : LibC::Double*, ldc : Blasint)
+  fun dsymm = cblas_dsymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : LibC::Double, a : LibC::Double*, lda : Blasint, b : LibC::Double*, ldb : Blasint, beta : LibC::Float, c : LibC::Double*, ldc : Blasint)
   fun csymm = cblas_csymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : LibC::Float*, a : LibC::Float*, lda : Blasint, b : LibC::Float*, ldb : Blasint, beta : LibC::Float*, c : LibC::Float*, ldc : Blasint)
   fun zsymm = cblas_zsymm(order : MatrixLayout, side : CblasSide, uplo : CblasUplo, m : Blasint, n : Blasint, alpha : ComplexDouble*, a : ComplexDouble*, lda : Blasint, b : ComplexDouble*, ldb : Blasint, beta : ComplexDouble*, c : ComplexDouble*, ldc : Blasint)
   fun ssyrk = cblas_ssyrk(order : MatrixLayout, uplo : CblasUplo, trans : CblasTranspose, n : Blasint, k : Blasint, alpha : LibC::Float, a : LibC::Float*, lda : Blasint, beta : LibC::Float, c : LibC::Float*, ldc : Blasint)
