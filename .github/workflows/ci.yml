@@ -35,15 +35,15 @@ jobs:
     - name: Install shards
       run: shards install --ignore-crystal-version
 
-    - name: Debug Libraries
+    - name: Debug Environment
       run: |
-        ls -l /usr/lib/x86_64-linux-gnu/libopenblas* || true
-        ls -l /usr/lib/x86_64-linux-gnu/libcblas* || true
-        ls -l /usr/lib/x86_64-linux-gnu/libblas* || true
+        echo "--- Searching for blas libraries ---"
+        find /usr/lib -name "*blas*" | grep ".so"
+        echo "--- pkg-config status ---"
         pkg-config --libs openblas || echo "openblas not in pkg-config"
         pkg-config --libs cblas || echo "cblas not in pkg-config"
 
     - name: Run tests
       run: |
-        # Try without -Dopenblas first, it should work if libcblas-dev is installed
-        crystal spec -v
+        # Force openblas flag
+        crystal spec -v -Dopenblas
