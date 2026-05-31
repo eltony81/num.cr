@@ -26,12 +26,21 @@ require "complex"
 class Tensor(T, S)
   def triu!(k : Int = 0)
     m, n = @shape
-    ptr = self.to_unsafe
-    m.times do |i|
-      n.times do |j|
-        if i > j - k
-          ptr[i * n + j] = T.zero
+    if self.is_c_contiguous
+      ptr = self.to_unsafe
+      m.times do |i|
+        n.times do |j|
+          if i > j - k
+            ptr[i * n + j] = T.new(0)
+          end
         end
+      end
+    else
+      # Fallback to slower but safe method for non-contiguous
+      self.each_pointer_with_index do |e, i|
+        r = i // n
+        c = i % n
+        e.value = r > c - k ? T.new(0) : e.value
       end
     end
     self
@@ -45,12 +54,20 @@ class Tensor(T, S)
 
   def tril!(k : Int = 0)
     m, n = @shape
-    ptr = self.to_unsafe
-    m.times do |i|
-      n.times do |j|
-        if i < j - k
-          ptr[i * n + j] = T.zero
+    if self.is_c_contiguous
+      ptr = self.to_unsafe
+      m.times do |i|
+        n.times do |j|
+          if i < j - k
+            ptr[i * n + j] = T.new(0)
+          end
         end
+      end
+    else
+      self.each_pointer_with_index do |e, i|
+        r = i // n
+        c = i % n
+        e.value = r < c - k ? T.new(0) : e.value
       end
     end
     self
@@ -273,9 +290,9 @@ class Tensor(T, S)
     wi = Pointer(T).malloc(n)
     jobvl, jobvr = 'N'.ord.to_u8, 'N'.ord.to_u8
     lda, ldvl, ldvr = n, 1, 1
-    vl_dummy, vr_dummy = T.zero, T.zero
+    vl_dummy, vr_dummy = T.new(0), T.new(0)
     lwork, info = -1, 0
-    work_query = T.zero
+    work_query = T.new(0)
     {% if T == Float64 %}
       LibLapack.dgeev(pointerof(jobvl), pointerof(jobvr), pointerof(n), a.to_unsafe, pointerof(lda),
         wr, wi, pointerof(vl_dummy), pointerof(ldvl), pointerof(vr_dummy), pointerof(ldvr), 
@@ -311,7 +328,7 @@ class Tensor(T, S)
     jobvl, jobvr = 'V'.ord.to_u8, 'V'.ord.to_u8
     lda, ldvl, ldvr = n, n, n
     lwork, info = -1, 0
-    work_query = T.zero
+    work_query = T.new(0)
     {% if T == Float64 %}
       LibLapack.dgeev(pointerof(jobvl), pointerof(jobvr), pointerof(n), a.to_unsafe, pointerof(lda),
         wr, wi, vl.to_unsafe, pointerof(ldvl), vr.to_unsafe, pointerof(ldvr), 
