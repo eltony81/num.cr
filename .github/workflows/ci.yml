@@ -9,14 +9,24 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: crystaldata/numci
-
+    
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install shards
-      run: shards install --ignore-crystal-version
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: latest
 
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libopenblas-dev liblapack-dev
+
+    - name: Link OpenBLAS
+      run: |
+        sudo ln -s /usr/lib/x86_64-linux-gnu/libopenblas.so.0 /usr/lib/x86_64-linux-gnu/libopenblas.so
+        
     - name: Run tests
       run: |
-        crystal spec -v
+        crystal spec -v -Dopenblas
