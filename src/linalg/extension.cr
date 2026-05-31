@@ -384,7 +384,7 @@ class Tensor(T, S)
         typ = :z.id
       end
     %}
-    LibCblas.{{typ}}{{storage}}{{name}}(LibCblas::ROW_MAJOR, {{*args}})
+    LibCblas.{{typ}}{{storage}}{{name}}(LibCblas::ROW_MAJOR, {{args.splat}})
   end
 
   # :nodoc:
@@ -398,7 +398,7 @@ class Tensor(T, S)
         typ = :z.id
       end
     %}
-    LibCblas.{{typ}}{{fn}}({{*args}})
+    LibCblas.{{typ}}{{fn}}({{args.splat}})
   end
 
   private macro blas_const(x)
@@ -420,7 +420,7 @@ class Tensor(T, S)
     %}
     event = Pointer(Void).malloc(1).unsafe_as(LibCL::ClEvent)
     queue = Num::ClContext.instance.queue
-    LibBlast.clblast_{{prefix.id}}{{typ}}{{name}}({{*args}}, pointerof(queue), pointerof(event))
+    LibBlast.clblast_{{prefix.id}}{{typ}}{{name}}({{args.splat}}, pointerof(queue), pointerof(event))
     Cl.check LibCL.cl_wait_for_events(1, pointerof(event))
     Cl.check LibCL.cl_release_event(event)
   end

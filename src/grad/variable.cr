@@ -35,7 +35,7 @@ class Num::Grad::Variable(T)
       result = @context.variable(@value {{operator.id}} other.value)
 
       if self.is_grad_needed || other.is_grad_needed
-        gate = {{gate_cls}}.new {{*args}}
+        gate = {{gate_cls}}.new {{args.splat}}
         gate.cache(result, self, other)
       end
 
