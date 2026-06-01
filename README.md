@@ -190,17 +190,36 @@ puts a.matmul(a)
 
 # --- Fork-Specific Features ---
 
-# Compute complex eigenvalues (returns a Tensor of Complex numbers)
-# Essential for stability and control theory analysis (e.g., in cryspace)
+# 1. Compute complex eigenvalues & eigenvectors (essential for stability/control theory)
 b = [[0, -1], [1, 0]].to_tensor.map &.to_f64
 puts b.eigvals_c
-
 # [(0.0 + 1.0i), (0.0 - 1.0i)]
 
-# Compute complex eigenvalues and right eigenvectors
 w, v = b.eig_c
 puts w
 # [(0.0 + 1.0i), (0.0 - 1.0i)]
+
+# 2. Matrix Power (positive, negative, and zero exponents)
+a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+puts a.matrix_power(2)
+# [[ 7, 10],
+#  [15, 22]]
+
+# 3. Moore-Penrose Pseudoinverse (pinv)
+# Useful for finding least-squares solutions in MIMO systems
+tall_matrix = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]].to_tensor
+puts tall_matrix.pinv
+
+# 4. Kronecker Product (kron)
+# Used for solving Lyapunov & Sylvester equations
+c = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+d = [[0.0, 5.0], [2.0, 1.0]].to_tensor
+puts c.kron(d)
+
+# 5. Matrix Exponential (expm)
+# Essential for continuous-to-discrete state-space conversion
+sys_matrix = [[0.0, 1.0], [-2.0, -3.0]].to_tensor
+puts sys_matrix.expm
 ```
 
 ### Einstein Notation
