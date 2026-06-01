@@ -180,6 +180,26 @@ puts "\nS (Singular values):"
 puts s
 puts "\nVT (Right singular vectors transposed):"
 puts vt
+
+# Mathematical Matrix Rank (using SVD)
+# Note: In num.cr, `tensor.rank` returns the number of tensor dimensions (axes).
+# To find the mathematical rank of a matrix, count the non-zero singular values.
+tol = 1e-12
+math_rank = 0
+s.each { |val| math_rank += 1 if val.abs > tol }
+puts "\nTensor dimensions (rank property in num.cr): #{svd_matrix.rank}"
+puts "Mathematical Matrix Rank (from SVD): #{math_rank}"
+puts "\n"
+
+# Diagonalization (Eigenvalues & Eigenvectors)
+sym_matrix = [[0.0, 1.0], [1.0, 1.0]].to_tensor
+w, v = sym_matrix.eigh
+puts "Symmetric Matrix A for Diagonalization:"
+puts sym_matrix
+puts "\nEigenvalues (w):"
+puts w
+puts "\nEigenvectors (v):"
+puts v
 puts "\n"
 
 # Matrix Inverse, Determinant, and System Solver
