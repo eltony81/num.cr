@@ -765,4 +765,133 @@ class Tensor(T, S)
     end
     {res_w, vr}
   end
+
+  # Computes the integer power of a square matrix.
+  def matrix_power(n : Int)
+    self.assert_square_matrix
+    if n < 0
+      return self.inv.matrix_power(-n)
+    elsif n == 0
+      return Tensor(T, S).eye(@shape[0])
+    elsif n == 1
+      return self.dup
+    end
+
+    base = self.is_c_contiguous ? self : self.dup(Num::RowMajor)
+    result = Tensor(T, S).eye(@shape[0])
+    
+    exponent = n
+    while exponent > 0
+      if exponent % 2 == 1
+        result = result.matmul(base)
+      end
+      base = base.matmul(base)
+      exponent //= 2
+    end
+    result
+  end
+
+  # Computes the Moore-Penrose pseudoinverse of a matrix.
+  def pinv(rcond : Float64 = 1e-15)
+    self.assert_is_matrix
+    m, n = @shape
+    u, s, vt = self.svd
+
+    max_s = s.max
+    cutoff = rcond * max_s
+
+    # Construct Sigma_plus of shape [n, m]
+    # A^+ = V * Sigma_plus * U^H
+    sig_plus = Tensor(T, S).zeros([n, m])
+    
+    s.size.times do |i|
+      val = s.to_unsafe[i]
+      if val > cutoff
+        sig_plus.to_unsafe[i * m + i] = T.new(1.0 / val)
+      end
+    end
+
+    vt.transpose.matmul(sig_plus).matmul(u.transpose)
+  end
+
+  # Computes the Kronecker product of two matrices.
+  def kron(other : Tensor(T, S))
+    self.assert_is_matrix
+    other.assert_is_matrix
+
+    m, n = @shape
+    p, q = other.shape
+
+    a = self.is_c_contiguous ? self : self.dup(Num::RowMajor)
+    b = other.is_c_contiguous ? other : other.dup(Num::RowMajor)
+
+    res = Tensor(T, S).zeros([m * p, n * q])
+
+    m.times do |i|
+      n.times do |j|
+        val = a.to_unsafe[i * n + j]
+        p.times do |k|
+          q.times do |l|
+            res.to_unsafe[(i * p + k) * (n * q) + (j * q + l)] = val * b.to_unsafe[k * q + l]
+          end
+        end
+      end
+    end
+    res
+  end
+
+  # Computes the matrix exponential using scaling and squaring with a Taylor series.
+  def expm
+    self.assert_square_matrix
+
+    a = self.is_c_contiguous ? self : self.dup(Num::RowMajor)
+    n = a.shape[0]
+
+    # Calculate infinity norm of A (maximum row sum of absolute values)
+    norm_inf = 0.0
+    n.times do |i|
+      row_sum = 0.0
+      n.times do |j|
+        row_sum += a.to_unsafe[i * n + j].abs
+      end
+      norm_inf = {norm_inf, row_sum}.max
+    end
+
+    # Scaling factor s such that ||a / 2^s|| <= 0.5
+    s = 0
+    if norm_inf > 0.5
+      s = (Math.log2(norm_inf) + 1).to_i
+      s = {0, s}.max
+    end
+
+    # Scale the matrix: b = a / (2^s)
+    scaling_factor = 2.0 ** s
+    b = Tensor(T, S).zeros([n, n])
+    n.times do |i|
+      n.times do |j|
+        b.to_unsafe[i * n + j] = a.to_unsafe[i * n + j] / scaling_factor
+      end
+    end
+
+    # Taylor series approximation of exp(b)
+    term = Tensor(T, S).eye(n)
+    result = Tensor(T, S).eye(n)
+
+    1.upto(12) do |k|
+      term = term.matmul(b)
+      term.size.times do |i|
+        term.to_unsafe[i] /= k
+      end
+      result.size.times do |i|
+        result.to_unsafe[i] += term.to_unsafe[i]
+      end
+    end
+
+    # Squaring step: square result s times
+    s.times do
+      result = result.matmul(result)
+    end
+
+    result
+  end
 end

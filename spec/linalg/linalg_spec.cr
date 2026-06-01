@@ -243,4 +243,68 @@ describe Tensor do
       Num::Testing.tensor_equal(b.cpu, expected).should be_true
     end
   {% end %}
+
+  it "calculates matrix power", tags: "blas" do
+    a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+    # Power of 0
+    p0 = a.matrix_power(0)
+    e0 = [[1.0, 0.0], [0.0, 1.0]].to_tensor
+    Num::Testing.tensor_equal(p0, e0).should be_true
+
+    # Power of 1
+    p1 = a.matrix_power(1)
+    Num::Testing.tensor_equal(p1, a).should be_true
+
+    # Power of 2
+    p2 = a.matrix_power(2)
+    e2 = [[7.0, 10.0], [15.0, 22.0]].to_tensor
+    Num::Testing.tensor_equal(p2, e2).should be_true
+
+    # Power of -1
+    pinv1 = a.matrix_power(-1)
+    einv = [[-2.0, 1.0], [1.5, -0.5]].to_tensor
+    Num::Testing.tensor_equal(pinv1, einv, tolerance: 1e-3).should be_true
+  end
+
+  it "calculates Moore-Penrose pseudoinverse (pinv)", tags: "blas" do
+    # Square invertible matrix (pinv should equal inverse)
+    a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+    ainv = a.pinv
+    expected = [[-2.0, 1.0], [1.5, -0.5]].to_tensor
+    Num::Testing.tensor_equal(ainv, expected, tolerance: 1e-3).should be_true
+
+    # Tall matrix
+    b = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]].to_tensor
+    binv = b.pinv
+    # Verify b * binv * b approx = b
+    reconstructed = b.matmul(binv).matmul(b)
+    Num::Testing.tensor_equal(reconstructed, b, tolerance: 1e-3).should be_true
+  end
+
+  it "calculates Kronecker product (kron)" do
+    a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+    b = [[0.0, 5.0], [2.0, 1.0]].to_tensor
+    result = a.kron(b)
+    expected = [
+      [0.0, 5.0, 0.0, 10.0],
+      [2.0, 1.0, 4.0, 2.0],
+      [0.0, 15.0, 0.0, 20.0],
+      [6.0, 3.0, 8.0, 4.0]
+    ].to_tensor
+    Num::Testing.tensor_equal(result, expected).should be_true
+  end
+
+  it "calculates matrix exponential (expm)", tags: "blas" do
+    # exp(zeros) = identity
+    a = [[0.0, 0.0], [0.0, 0.0]].to_tensor
+    ea = a.expm
+    expected_eye = [[1.0, 0.0], [0.0, 1.0]].to_tensor
+    Num::Testing.tensor_equal(ea, expected_eye).should be_true
+
+    # exp of a diagonal matrix
+    b = [[2.0, 0.0], [0.0, -1.0]].to_tensor
+    eb = b.expm
+    expected_diag = [[Math.exp(2.0), 0.0], [0.0, Math.exp(-1.0)]].to_tensor
+    Num::Testing.tensor_equal(eb, expected_diag, tolerance: 1e-5).should be_true
+  end
 end
