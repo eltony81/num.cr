@@ -187,6 +187,20 @@ puts a.matmul(a)
 
 # [[7 , 10],
 #  [15, 22]]
+
+# --- Fork-Specific Features ---
+
+# Compute complex eigenvalues (returns a Tensor of Complex numbers)
+# Essential for stability and control theory analysis (e.g., in cryspace)
+b = [[0, -1], [1, 0]].to_tensor.map &.to_f64
+puts b.eigvals_c
+
+# [(0.0 + 1.0i), (0.0 - 1.0i)]
+
+# Compute complex eigenvalues and right eigenvectors
+w, v = b.eig_c
+puts w
+# [(0.0 + 1.0i), (0.0 - 1.0i)]
 ```
 
 ### Einstein Notation
