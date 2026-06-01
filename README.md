@@ -17,6 +17,18 @@ It provides:
 - GPU accelerated routines backed by `OpenCL`
 - Linear algebra routines backed by `LAPACK` and `BLAS`
 
+## Fork Improvements (eltony81/num.cr)
+
+This fork is maintained to support control theory applications and robust computations in the `cryspace` project. Key enhancements and improvements over the original `crystal-data/num.cr` include:
+
+- **Complex Eigenvalue Support (`eigvals_c` & `eig_c`)**: Added methods in linear algebra to compute eigenvalues/eigenvectors and return a Complex Tensor (`Tensor(Complex, CPU(Complex))`), which is critical for stability and control system analysis in `cryspace`.
+- **Dynamic LAPACK Workspace Queries**: Replaced hardcoded LAPACK workspace sizes with dynamic workspace queries (`lwork = -1`) inside eigenvalue/eigenvector routines to optimize memory allocation and stability.
+- **Fixed CBLAS Signatures & Correct Linking**: 
+  - Corrected parameter signatures in `cblas.cr` for `cblas_dtbmv`, `cblas_dtbsv`, and `cblas_dsymm` (ensuring appropriate double/float precision mapping).
+  - Cleaned up implicit OpenBLAS library linking in `cblas.cr` to prevent collision issues across different platform/distro environments.
+- **Robust LAPACK Solver Integration**: Resolved alignment/solver issues in `solve` (calling LAPACK solver like `sgesv`/`dgesv`).
+- **Improved CI Pipelines**: Added support for standard Debian-based environments and official test containers by explicitly resolving dependency libraries (`openblas`, `clblast`, `arrow`, `atlas`, `libcblas-dev`).
+
 ## Prerequisites
 
 `Num.cr` aims to be a scientific computing library written in pure Crystal.
