@@ -185,11 +185,48 @@ class Tensor(T, S)
   # a = Tensor.new([3]) { |i| i }
   # a.map { |e| e + 5 } # => [5, 6, 7]
   # ```
-  def map(&block : T -> U) forall U
-    Num.map(self) do |el|
-      yield el
+  {% if flag?(:preview_mt) %}
+    def map(&proc_arg : T -> U) forall U
+      {% if @type.type_vars[1].stringify.includes?("CPU") %}
+        if self.size >= 100000 && self.is_c_contiguous
+          size = self.size
+          num_workers = 4
+          chunk_size = (size + num_workers - 1) // num_workers
+          chan = Channel(Nil).new
+          result = Tensor(U, CPU(U)).new(self.shape)
+          data = result.data.to_hostptr
+          arr_data = self.data.to_hostptr + self.offset
+          proc_val = proc_arg
+          num_workers.times do |w|
+            start_idx = w * chunk_size
+            end_idx = {start_idx + chunk_size, size}.min
+            break if start_idx >= size
+            spawn do
+              start_idx.upto(end_idx - 1) do |i|
+                data[i] = proc_val.call(arr_data[i])
+              end
+              chan.send(nil)
+            end
+          end
+          num_workers.times do |w|
+            start_idx = w * chunk_size
+            break if start_idx >= size
+            chan.receive
+          end
+          return result
+        end
+      {% end %}
+      Num.map(self) do |el|
+        proc_arg.call(el)
+      end
     end
-  end
+  {% else %}
+    def map(&block : T -> U) forall U
+      Num.map(self) do |el|
+        yield el
+      end
+    end
+  {% end %}
 
   # Maps a block across a `Tensor` in place.  The `Tensor` is treated
   # as flat during iteration, and iteration is always done
@@ -206,11 +243,53 @@ class Tensor(T, S)
   # a.map! { |e| e + 5 }
   # a # => [5, 6, 7]
   # ```
-  def map!(&block)
-    Num.map!(self) do |el|
-      yield el
+  {% if flag?(:preview_mt) %}
+    def map!(&proc_arg : T -> _)
+      {% if @type.type_vars[1].stringify.includes?("CPU") %}
+        if self.size >= 100000 && self.is_c_contiguous
+          size = self.size
+          num_workers = 4
+          chunk_size = (size + num_workers - 1) // num_workers
+          chan = Channel(Nil).new
+          arr_data = self.data.to_hostptr + self.offset
+          proc_val = proc_arg
+          num_workers.times do |w|
+            start_idx = w * chunk_size
+            end_idx = {start_idx + chunk_size, size}.min
+            break if start_idx >= size
+            spawn do
+              start_idx.upto(end_idx - 1) do |i|
+                value = proc_val.call(arr_data[i])
+                {% if @type.type_vars[0] == Bool %}
+                  arr_data[i] = (value ? true : false) && value != 0
+                {% elsif @type.type_vars[0] == String %}
+                  arr_data[i] = value.to_s
+                {% else %}
+                  arr_data[i] = @type.type_vars[0].new(value)
+                {% end %}
+              end
+              chan.send(nil)
+            end
+          end
+          num_workers.times do |w|
+            start_idx = w * chunk_size
+            break if start_idx >= size
+            chan.receive
+          end
+          return self
+        end
+      {% end %}
+      Num.map!(self) do |el|
+        proc_arg.call(el)
+      end
     end
-  end
+  {% else %}
+    def map!(&block : T -> _)
+      Num.map!(self) do |el|
+        yield el
+      end
+    end
+  {% end %}
 
   # Maps a block across two `Tensors`.  This is more efficient than
   # zipping iterators since it iterates both `Tensor`'s in a single

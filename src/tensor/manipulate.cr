@@ -431,7 +431,7 @@ class Tensor(T, S)
   # a = Tensor.new(3, 3) { |i, _| i }
   # a.diagonal # => [0, 1, 2]
   # ```
-  def diagonal : Tensor(T, S)
-    Num.diagonal(self)
+  def diagonal(offset : Int = 0) : Tensor(T, S)
+    Num.diagonal(self, offset)
   end
 end

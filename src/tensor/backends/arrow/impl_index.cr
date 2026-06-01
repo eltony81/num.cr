@@ -165,14 +165,29 @@ module Num
   # a = Tensor.new(3, 3) { |i, _| i }
   # a.diagonal # => [0, 1, 2]
   # ```
-  def diagonal(arr : Tensor(U, ARROW(U))) forall U
+  def diagonal(arr : Tensor(U, ARROW(U)), offset : Int = 0) forall U
     unless arr.rank == 2
       raise Num::Exceptions::ValueError.new("Tensor must be 2D")
     end
 
-    n = arr.shape.min
-    new_shape = [n]
-    new_strides = [arr.strides.sum]
-    Tensor.new(arr.data, new_shape, new_strides, arr.offset, U)
+    rows = arr.shape[0]
+    cols = arr.shape[1]
+
+    if offset >= 0
+      n = {rows, cols - offset}.min
+      start_offset = arr.offset + offset * arr.strides[1]
+    else
+      n = {rows + offset, cols}.min
+      start_offset = arr.offset - offset * arr.strides[0]
+    end
+
+    if n <= 0
+      new_shape = [0]
+      new_strides = [1]
+    else
+      new_shape = [n]
+      new_strides = [arr.strides.sum]
+    end
+    Tensor.new(arr.data, new_shape, new_strides, start_offset, U)
   end
 end

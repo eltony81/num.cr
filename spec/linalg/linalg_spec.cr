@@ -307,4 +307,42 @@ describe Tensor do
     expected_diag = [[Math.exp(2.0), 0.0], [0.0, Math.exp(-1.0)]].to_tensor
     Num::Testing.tensor_equal(eb, expected_diag, tolerance: 1e-5).should be_true
   end
+
+  it "calculates Schur decomposition", tags: "blas" do
+    a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+    t, z = a.schur
+    # Verify Z * T * Z^T = A
+    reconstructed = z.matmul(t).matmul(z.transpose)
+    Num::Testing.tensor_equal(reconstructed, a, tolerance: 1e-5).should be_true
+  end
+
+  it "solves Sylvester equation", tags: "blas" do
+    a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+    b = [[5.0, 6.0], [7.0, 8.0]].to_tensor
+    c = [[9.0, 10.0], [11.0, 12.0]].to_tensor
+    x = Tensor.sylvester(a, b, c)
+    # Verify A * X + X * B = C
+    res = a.matmul(x) + x.matmul(b)
+    Num::Testing.tensor_equal(res, c, tolerance: 1e-5).should be_true
+  end
+
+  it "solves continuous Lyapunov equation", tags: "blas" do
+    a = [[-3.0, 1.0], [0.0, -2.0]].to_tensor
+    q = [[1.0, 0.0], [0.0, 1.0]].to_tensor
+    x = Tensor.lyapunov(a, q)
+    # Verify A * X + X * A^T = Q
+    res = a.matmul(x) + x.matmul(a.transpose)
+    Num::Testing.tensor_equal(res, q, tolerance: 1e-5).should be_true
+  end
+
+  it "supports offset diagonals" do
+    a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]].to_tensor
+    d1 = a.diagonal(1)
+    expected_d1 = [2, 6].to_tensor
+    Num::Testing.tensor_equal(d1, expected_d1).should be_true
+
+    d_neg1 = a.diagonal(-1)
+    expected_d_neg1 = [4, 8].to_tensor
+    Num::Testing.tensor_equal(d_neg1, expected_d_neg1).should be_true
+  end
 end

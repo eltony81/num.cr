@@ -826,13 +826,21 @@ class Tensor(T, S)
     b = other.is_c_contiguous ? other : other.dup(Num::RowMajor)
 
     res = Tensor(T, S).zeros([m * p, n * q])
+    res_ptr = res.to_unsafe
+    b_ptr = b.to_unsafe
+    n_q = n * q
 
     m.times do |i|
+      i_p = i * p
+      n_times_i = i * n
       n.times do |j|
-        val = a.to_unsafe[i * n + j]
+        val = a.to_unsafe[n_times_i + j]
+        j_q = j * q
         p.times do |k|
+          row_offset = (i_p + k) * n_q + j_q
+          k_q = k * q
           q.times do |l|
-            res.to_unsafe[(i * p + k) * (n * q) + (j * q + l)] = val * b.to_unsafe[k * q + l]
+            res_ptr[row_offset + l] = val * b_ptr[k_q + l]
           end
         end
       end
@@ -840,58 +848,193 @@ class Tensor(T, S)
     res
   end
 
-  # Computes the matrix exponential using scaling and squaring with a Taylor series.
+  # Helpers for Padé matrix exponential
+  def self.pade_coef(m : Int, k : Int) : Float64
+    num = 1.0
+    1.upto(k) do |i|
+      num *= (m - i + 1).to_f / ((2 * m - i + 1).to_f * i.to_f)
+    end
+    num
+  end
+
+  def self.matrix_1_norm(a : Tensor(T, S)) : Float64 forall T, S
+    m, n = a.shape
+    max_col_sum = 0.0
+    n.times do |j|
+      col_sum = 0.0
+      m.times do |i|
+        col_sum += a.to_unsafe[i * n + j].abs
+      end
+      max_col_sum = {max_col_sum, col_sum}.max
+    end
+    max_col_sum
+  end
+
+  # Computes the matrix exponential using Higham scaling and squaring with Padé approximation.
   def expm
     self.assert_square_matrix
 
     a = self.is_c_contiguous ? self : self.dup(Num::RowMajor)
-    n = a.shape[0]
+    norm = Tensor.matrix_1_norm(a)
 
-    # Calculate infinity norm of A (maximum row sum of absolute values)
-    norm_inf = 0.0
-    n.times do |i|
-      row_sum = 0.0
-      n.times do |j|
-        row_sum += a.to_unsafe[i * n + j].abs
-      end
-      norm_inf = {norm_inf, row_sum}.max
+    m = 13
+    if norm <= 0.015
+      m = 3
+    elsif norm <= 0.25
+      m = 5
+    elsif norm <= 0.95
+      m = 7
+    elsif norm <= 2.1
+      m = 9
     end
 
-    # Scaling factor s such that ||a / 2^s|| <= 0.5
     s = 0
-    if norm_inf > 0.5
-      s = (Math.log2(norm_inf) + 1).to_i
+    if norm > 5.4
+      s = (Math.log2(norm / 5.4)).ceil.to_i
       s = {0, s}.max
     end
 
-    # Scale the matrix: b = a / (2^s)
     scaling_factor = 2.0 ** s
-    b = Tensor(T, S).zeros([n, n])
-    n.times do |i|
-      n.times do |j|
-        b.to_unsafe[i * n + j] = a.to_unsafe[i * n + j] / scaling_factor
+    b = Tensor(T, S).zeros(a.shape)
+    a.size.times do |i|
+      b.to_unsafe[i] = a.to_unsafe[i] / scaling_factor
+    end
+
+    n = a.shape[0]
+    p_mat = Tensor(T, S).eye(n)
+    q_mat = Tensor(T, S).eye(n)
+
+    term = b.dup
+    1.upto(m) do |k|
+      coef = Tensor.pade_coef(m, k)
+      coef_q = (k % 2 == 1) ? -coef : coef
+
+      term_size = term.size
+      term_size.times do |i|
+        p_mat.to_unsafe[i] += term.to_unsafe[i] * coef
+        q_mat.to_unsafe[i] += term.to_unsafe[i] * coef_q
+      end
+
+      if k < m
+        term = term.matmul(b)
       end
     end
 
-    # Taylor series approximation of exp(b)
-    term = Tensor(T, S).eye(n)
-    result = Tensor(T, S).eye(n)
+    result = q_mat.solve(p_mat)
 
-    1.upto(12) do |k|
-      term = term.matmul(b)
-      term.size.times do |i|
-        term.to_unsafe[i] /= k
-      end
-      result.size.times do |i|
-        result.to_unsafe[i] += term.to_unsafe[i]
-      end
-    end
-
-    # Squaring step: square result s times
     s.times do
       result = result.matmul(result)
     end
 
     result
+  end
+
+  # Compute Schur decomposition of a square matrix.
+  #
+  # Factor the matrix a as Z * T * Z^T, where Z is orthogonal (Schur vectors)
+  # and T is quasi-upper triangular (Schur form).
+  def schur
+    self.assert_square_matrix
+    t = self.dup(Num::ColMajor)
+    n = t.shape[0]
+
+    wr = Pointer(T).malloc(n)
+    wi = Pointer(T).malloc(n)
+    z = Tensor(T, S).new([n, n], Num::ColMajor)
+
+    jobvs = 'V'.ord.to_u8
+    sort = 'N'.ord.to_u8
+    select_cb = Pointer(Void).null
+    lda = n
+    ldvs = n
+    sdim = 0
+    info = 0
+
+    # workspace query
+    lwork = -1
+    work_query = T.zero
+    bwork_dummy = Pointer(LibC::Char).null
+
+    {% if T == Float32 %}
+      LibLapack.sgees(pointerof(jobvs), pointerof(sort), select_cb, pointerof(n), t.to_unsafe, pointerof(lda),
+        pointerof(sdim), wr, wi, z.to_unsafe, pointerof(ldvs), pointerof(work_query), pointerof(lwork),
+        bwork_dummy, pointerof(info))
+      lwork = work_query.to_i32
+      work = Pointer(Float32).malloc(lwork)
+      LibLapack.sgees(pointerof(jobvs), pointerof(sort), select_cb, pointerof(n), t.to_unsafe, pointerof(lda),
+        pointerof(sdim), wr, wi, z.to_unsafe, pointerof(ldvs), work, pointerof(lwork),
+        bwork_dummy, pointerof(info))
+    {% elsif T == Float64 %}
+      LibLapack.dgees(pointerof(jobvs), pointerof(sort), select_cb, pointerof(n), t.to_unsafe, pointerof(lda),
+        pointerof(sdim), wr, wi, z.to_unsafe, pointerof(ldvs), pointerof(work_query), pointerof(lwork),
+        bwork_dummy, pointerof(info))
+      lwork = work_query.to_i32
+      work = Pointer(Float64).malloc(lwork)
+      LibLapack.dgees(pointerof(jobvs), pointerof(sort), select_cb, pointerof(n), t.to_unsafe, pointerof(lda),
+        pointerof(sdim), wr, wi, z.to_unsafe, pointerof(ldvs), work, pointerof(lwork),
+        bwork_dummy, pointerof(info))
+    {% else %}
+      raise "schur not implemented for #{T}"
+    {% end %}
+
+    raise "LAPACK gees returned #{info}" if info != 0
+    {t.dup(Num::RowMajor), z.dup(Num::RowMajor)}
+  end
+
+  # Solve the Sylvester equation A * X + X * B = C.
+  def self.sylvester(a : Tensor(T, S), b : Tensor(T, S), c : Tensor(T, S)) : Tensor(T, S) forall T, S
+    raise "Matrix must be square" unless a.rank == 2 && a.shape[0] == a.shape[1]
+    raise "Matrix must be square" unless b.rank == 2 && b.shape[0] == b.shape[1]
+    raise "Input must be a matrix" unless c.rank == 2
+    if c.shape[0] != a.shape[0] || c.shape[1] != b.shape[0]
+      raise "Dimensions mismatch for Sylvester equation"
+    end
+
+    t_a, q_a = a.schur
+    t_b, q_b = b.schur
+
+    c_tilde = q_a.transpose.matmul(c).matmul(q_b)
+
+    y = c_tilde.dup(Num::ColMajor)
+    t_a_f = t_a.is_f_contiguous ? t_a : t_a.dup(Num::ColMajor)
+    t_b_f = t_b.is_f_contiguous ? t_b : t_b.dup(Num::ColMajor)
+
+    trana = 'N'.ord.to_u8
+    tranb = 'N'.ord.to_u8
+    isgn = 1
+    m = a.shape[0]
+    n = b.shape[0]
+    lda = m
+    ldb = n
+    ldc = m
+    scale = T.zero
+    info = 0
+
+    {% if T == Float32 %}
+      LibLapack.strsyl(pointerof(trana), pointerof(tranb), pointerof(isgn), pointerof(m), pointerof(n),
+        t_a_f.to_unsafe, pointerof(lda), t_b_f.to_unsafe, pointerof(ldb), y.to_unsafe, pointerof(ldc),
+        pointerof(scale), pointerof(info))
+    {% elsif T == Float64 %}
+      LibLapack.dtrsyl(pointerof(trana), pointerof(tranb), pointerof(isgn), pointerof(m), pointerof(n),
+        t_a_f.to_unsafe, pointerof(lda), t_b_f.to_unsafe, pointerof(ldb), y.to_unsafe, pointerof(ldc),
+        pointerof(scale), pointerof(info))
+    {% else %}
+      raise "sylvester not implemented for #{T}"
+    {% end %}
+
+    raise "LAPACK trsyl returned #{info}" if info != 0
+
+    if scale != T.new(1.0) && scale != T.zero
+      y.size.times do |i|
+        y.to_unsafe[i] /= scale
+      end
+    end
+
+    q_a.matmul(y).matmul(q_b.transpose)
+  end
+
+  # Solve the continuous Lyapunov equation A * X + X * A^T = Q.
+  def self.lyapunov(a : Tensor(T, S), q : Tensor(T, S)) : Tensor(T, S) forall T, S
+    self.sylvester(a, a.transpose, q)
   end
 end
