@@ -217,9 +217,27 @@ d = [[0.0, 5.0], [2.0, 1.0]].to_tensor
 puts c.kron(d)
 
 # 5. Matrix Exponential (expm)
-# Essential for continuous-to-discrete state-space conversion
+# Upgraded to Higham Padé approximation (essential for continuous-to-discrete conversion)
 sys_matrix = [[0.0, 1.0], [-2.0, -3.0]].to_tensor
 puts sys_matrix.expm
+
+# 6. Schur Decomposition (schur)
+# Decomposes matrix into quasi-triangular and orthogonal matrices: A = Z * T * Z^T
+a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+t, z = a.schur
+
+# 7. Sylvester & Lyapunov Solvers
+# Solves Sylvester: A * X + X * B = C  and Lyapunov: A * X + X * A^T = Q
+a = [[1.0, 2.0], [3.0, 4.0]].to_tensor
+b = [[5.0, 6.0], [7.0, 8.0]].to_tensor
+c = [[9.0, 10.0], [11.0, 12.0]].to_tensor
+x = Tensor.sylvester(a, b, c)
+
+# 8. Offset Diagonals
+# Zero-copy views of offset sub-diagonals
+a = [[1, 2, 3], [4, 5, 6], [7, 8, 9]].to_tensor
+puts a.diagonal(1)  # => [2, 6]
+puts a.diagonal(-1) # => [4, 8]
 ```
 
 ### Einstein Notation
