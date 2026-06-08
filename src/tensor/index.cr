@@ -127,22 +127,76 @@ class Tensor(T, S)
   # result = t[indices] # Returns: Tensor([[1, 2], [5, 6]])
   # ```
   #
-  def [](indices : Tensor) : Tensor(T, S)
+  def [](indices : Tensor(Bool, S2)) : Tensor(T, S) forall S2
+    # Boolean indexing / masking
+    if indices.shape != self.shape
+      raise Num::Exceptions::ValueError.new("Boolean mask shape #{indices.shape} must match tensor shape #{self.shape}")
+    end
+    count = 0
+    indices.each do |val|
+      count += 1 if val
+    end
+    result = Tensor(T, S).zeros([count])
+    idx = 0
+    self.zip(indices) do |val, m_val|
+      if m_val
+        result.to_unsafe[idx] = val
+        idx += 1
+      end
+    end
+    result
+  end
+
+  def [](indices : Tensor(U, S2)) : Tensor(T, S) forall U, S2
+    # Integer array indexing
     shape = indices.shape + self.shape[1..]
     o = Tensor(T, S).zeros(shape)
     indices.shape[0].times do |i|
       row = indices[i]
-      # If row is a single value, unwrap it
-      # TODO: Is there a better way to detect this?
       if row.is_a?(Tensor) && row.rank == 0 && row.size == 1
-        o[i] = self[row.value]
+        o[i] = self[row.value.to_i]
       else
         o[i] = self[row]
       end
     end
-
     o
   end
+
+  def []=(mask : Tensor(Bool, S2), value : T) forall S2
+    unless @flags.write?
+      raise Num::Exceptions::ValueError.new("Tensor is read-only")
+    end
+    if mask.shape != self.shape
+      raise Num::Exceptions::ValueError.new("Boolean mask shape #{mask.shape} must match tensor shape #{self.shape}")
+    end
+    self.map!(mask) do |val, mask_val|
+      mask_val ? value : val
+    end
+  end
+
+  def []=(mask : Tensor(Bool, S2), value : Tensor(T, S3)) forall S2, S3
+    unless @flags.write?
+      raise Num::Exceptions::ValueError.new("Tensor is read-only")
+    end
+    if mask.shape != self.shape
+      raise Num::Exceptions::ValueError.new("Boolean mask shape #{mask.shape} must match tensor shape #{self.shape}")
+    end
+    val_idx = 0
+    self.map!(mask) do |val, mask_val|
+      if mask_val
+        ret = value.to_unsafe[val_idx]
+        val_idx += 1
+        ret
+      else
+        val
+      end
+    end
+  end
+
+
+
+
+
 
   # The primary method of setting Tensor values.  The slicing behavior
   # for this method is identical to the `[]` method.

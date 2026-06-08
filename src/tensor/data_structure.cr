@@ -167,6 +167,17 @@ class Tensor(T, S)
     true
   end
 
+  # Returns true if the Tensor is C-contiguous (Row-Major memory layout)
+  def is_c_contiguous? : Bool
+    is_c_contiguous
+  end
+
+  # Returns true if the Tensor is Fortran-contiguous (Column-Major memory layout)
+  def is_f_contiguous? : Bool
+    is_f_contiguous
+  end
+
+
   private def update_flags(m : Num::ArrayFlags = Num::ArrayFlags::All)
     if m.fortran?
       if is_f_contiguous

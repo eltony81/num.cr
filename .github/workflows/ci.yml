@@ -12,7 +12,7 @@ jobs:
     container: crystaldata/numci
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install shards
       run: shards install --ignore-crystal-version

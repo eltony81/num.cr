@@ -164,3 +164,12 @@ require "./einsum/contractors/contract"
 require "./einsum/validation"
 require "./einsum/optimizers"
 require "./einsum/strategies"
+
+require "./tensor/extensions/manipulate_ext"
+require "./extensions/polynomial"
+require "./extensions/contractions"
+require "./io/serialization"
+require "./extensions/ufunc"
+require "./extensions/masked"
+require "./extensions/sparse_coo"
+

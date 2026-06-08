@@ -11,14 +11,14 @@ jobs:
       image: crystaldata/numci
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v6
     - name: Install dependencies
       run: shards install --ignore-crystal-version
     - name: Run tests
       run: crystal spec -v
     - name: Build docs
       run: mkdocs build
-    - uses: peaceiris/actions-gh-pages@v3
+    - uses: peaceiris/actions-gh-pages@v4
       if: github.event_name == 'push' && github.ref == 'refs/heads/master'
       with:
         github_token: ${{ secrets.DOCS_TOKEN }}

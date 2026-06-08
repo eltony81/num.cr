@@ -340,5 +340,20 @@ puts net.forward(x).value.map { |el| el > 0 ? 1 : 0}
 #  [0]]
 ```
 
+### Advanced Features
+
+`num.cr` supports several advanced features for higher-performance numerical computing:
+
+1. **Advanced Indexing**: Retrieve elements via boolean masks (`t[t > 2.0]`) or integer index arrays (`t[Tensor.from_array([0, 2])]`), and assign values back to them (`t[mask] = 99.0` or `t[mask] = replacement_tensor`).
+2. **C vs. Fortran Contiguous Layouts**: Query memory ordering contiguity using `is_c_contiguous?` (Row-Major) and `is_f_contiguous?` (Column-Major).
+3. **Array Manipulation APIs**: Horizontal and vertical stacking (`Tensor.hstack`, `Tensor.vstack`), cyclic shifts (`roll`), and reversals along dimensions (`flip`).
+4. **Polynomial Mathematics**: Construct polynomials using `Num::Polynomial.new([c0, c1, ...])` and evaluate, add, multiply, or compute derivatives.
+5. **Tensor Contractions**: Outer products (`Tensor.outer`) and vector cross products (`Tensor.cross`).
+6. **Binary Serialization & Text I/O**: Fast serialization of tensors to disk (`save` and `load`) and CSV/TSV table loading (`Tensor.loadtxt`).
+7. **Ufunc Reduction Helpers**: Running accumulation operators (`accumulate(:add)`) and pairwise broadcasting outer applications (`Tensor.ufunc_outer(a, b, :multiply)`).
+8. **Masked Tensors**: Wrapper to track invalid/ignored elements during calculations (`Num::MaskedTensor`).
+9. **Sparse Tensors**: Support for Coordinate format sparse matrices (`Num::SparseCOOTensor`) and sparse-vector matrix multiplication.
+
 Review the documentation for full implementation details, and if something is missing,
 open an issue to add it!
+
