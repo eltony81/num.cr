@@ -151,20 +151,29 @@ class OCL(T) < Num::Backend::Storage(T)
 end
 
 class Tensor(T, S)
+  def self.from_storage(data : S, shape : Array(Int32), strides : Array(Int32), offset : Int32) : Tensor(T, S)
+    new(data, shape, strides, offset, T)
+  end
+
   # Returns a new Tensor pointing to a sub-buffer (zero-copy) of the current Tensor.
   # This requires the device memory offset (offset in bytes) to be aligned to the device's
   # CL_DEVICE_MEM_BASE_ADDR_ALIGN.
   def sub_tensor(origin_elements : Int, shape : Array(Int), strides : Array(Int)) : Tensor(T, S)
     {% if S == OCL(T) %}
       data_store = @data
-      if data_store.is_a?(OCL(T)) && data_store.data.is_a?(LibCL::ClMem)
-        byte_offset = (origin_elements * sizeof(T)).to_u64
-        byte_size = (shape.product * sizeof(T)).to_u64
-        sub_mem = Cl.create_sub_buffer(data_store.data.as(LibCL::ClMem), byte_offset, byte_size)
-        new_storage = OCL(T).new(sub_mem, shape, strides)
-        Tensor.new(new_storage, shape.map(&.to_i32), strides.map(&.to_i32), 0)
+      if data_store.is_a?(OCL(T))
+        data_mem = data_store.data
+        if data_mem.is_a?(LibCL::ClMem)
+          byte_offset = (origin_elements * sizeof(T)).to_u64
+          byte_size = (shape.product * sizeof(T)).to_u64
+          sub_mem = Cl.create_sub_buffer(data_mem, byte_offset, byte_size)
+          new_storage = OCL(T).new(sub_mem, shape, strides)
+          Tensor.new(new_storage, shape.map(&.to_i32), strides.map(&.to_i32), 0, T)
+        else
+          raise "Sub-tensor is only supported for OpenCL non-SVM backend"
+        end
       else
-        raise "Sub-tensor is only supported for OpenCL non-SVM backend"
+        raise "Sub-tensor is only supported for OpenCL backend"
       end
     {% else %}
       raise "Sub-tensor is only supported on OpenCL backend"

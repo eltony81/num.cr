@@ -24,11 +24,11 @@
 require "opencl"
 
 # :nodoc:
-struct Num::Internal::ClInfo
+class Num::Internal::ClInfo
   getter device : LibCL::ClDeviceId
   getter context : LibCL::ClContext
   getter queue : LibCL::ClCommandQueue
-  getter? svm_supported : Bool
+  property? svm_supported : Bool
 
   def initialize(@device : LibCL::ClDeviceId, @context : LibCL::ClContext, @queue : LibCL::ClCommandQueue)
     @svm_supported = Cl.svm_supported?(@device)
