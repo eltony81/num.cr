@@ -47,4 +47,23 @@ describe Tensor do
     expected = [3, 4, 7].to_tensor
     Num::Testing.tensor_equal(result, expected).should be_true
   end
+
+  {% if flag?(:arrow) %}
+    it "converts a Tensor to/from Arrow::Tensor" do
+      t = Tensor(Int32, ARROW(Int32)).new([2, 3], device: ARROW(Int32)) { |i| i * 10 }
+      
+      arrow_tensor = t.to_arrow_tensor
+      arrow_tensor.ndim.should eq(2)
+      arrow_tensor.size.should eq(6)
+      arrow_tensor.shape.should eq([2_i64, 3_i64])
+      arrow_tensor.strides.should eq([12_i64, 4_i64])
+      
+      imported_t = Tensor(Int32, ARROW(Int32)).from_arrow_tensor(arrow_tensor)
+      imported_t.shape.should eq([2, 3])
+      imported_t.strides.should eq([3, 1])
+      imported_t[0, 0].value.should eq(0)
+      imported_t[0, 1].value.should eq(10)
+      imported_t[1, 2].value.should eq(50)
+    end
+  {% end %}
 end

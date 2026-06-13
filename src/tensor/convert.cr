@@ -81,4 +81,16 @@ class Tensor(T, S)
   def as_type(dtype : U.class) forall U
     Num.as_type(self, dtype)
   end
+
+  {% if flag?(:arrow) %}
+    # Exports a Tensor to an Arrow::Tensor (multidimensional array)
+    def to_arrow_tensor : Arrow::Tensor
+      Num.to_arrow_tensor(self)
+    end
+
+    # Creates a Tensor from an Arrow::Tensor (multidimensional array)
+    def self.from_arrow_tensor(tensor : Arrow::Tensor) : Tensor(T, ARROW(T))
+      Num.from_arrow_tensor(tensor, T)
+    end
+  {% end %}
 end

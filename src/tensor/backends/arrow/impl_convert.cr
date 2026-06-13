@@ -109,4 +109,49 @@ module Num
     storage = CPU(U).new(arr.to_unsafe, arr.shape, arr.strides)
     Tensor(U, CPU(U)).new(storage, arr.shape)
   end
+
+  # Exports a `Tensor` to an `Arrow::Tensor` (multidimensional array)
+  def to_arrow_tensor(arr : Tensor(U, ARROW(U))) : Arrow::Tensor forall U
+    dtype = case U
+            when Int8.class    then Arrow::DataType.int8
+            when UInt8.class   then Arrow::DataType.uint8
+            when Int16.class   then Arrow::DataType.int16
+            when UInt16.class  then Arrow::DataType.uint16
+            when Int32.class   then Arrow::DataType.int32
+            when UInt32.class  then Arrow::DataType.uint32
+            when Int64.class   then Arrow::DataType.int64
+            when UInt64.class  then Arrow::DataType.uint64
+            when Float32.class then Arrow::DataType.float
+            when Float64.class then Arrow::DataType.double
+            when Bool.class    then Arrow::DataType.boolean
+            else
+              raise "Unsupported data type for Arrow::Tensor export"
+            end
+
+    # Zero-copy wrap of the raw pointer in GArrowBuffer
+    raw_ptr = arr.to_unsafe
+    size_in_bytes = arr.shape.product * sizeof(U)
+    bytes = Bytes.new(raw_ptr.unsafe_as(Pointer(UInt8)), size_in_bytes)
+    buffer = Arrow::Buffer.new(bytes)
+
+    # GArrowTensor shape and byte strides
+    shape_i64 = arr.shape.map(&.to_i64)
+    strides_i64 = arr.strides.map { |s| (s * sizeof(U)).to_i64 }
+
+    Arrow::Tensor.new(dtype, buffer, shape_i64, strides_i64)
+  end
+
+  # Creates a `Tensor` from an `Arrow::Tensor` (multidimensional array)
+  def from_arrow_tensor(tensor : Arrow::Tensor, dtype : U.class) : Tensor(U, ARROW(U)) forall U
+    # Get the raw memory pointer from GArrowBuffer (zero-copy)
+    buffer = tensor.buffer
+    raw_ptr = buffer.raw_pointer.as(Pointer(U))
+
+    # Convert GArrowTensor shape and byte strides back to elements
+    shape = tensor.shape.map(&.to_i32)
+    strides = tensor.strides.map { |s| (s / sizeof(U)).to_i32 }
+
+    storage = ARROW(U).new(raw_ptr, shape, strides)
+    Tensor(U, ARROW(U)).new(storage, shape, strides, 0)
+  end
 end

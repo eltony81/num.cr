@@ -34,8 +34,39 @@ class ARROW(T) < Num::Backend::Storage(T)
   # Returns the raw Arrow::Array associated with
   # an `ARROW(T)`
   def to_unsafe
-    raw, _ = data.values
-    raw.to_unsafe.unsafe_as(Pointer(T))
+    {% if T == Int8 %}
+      raw, _ = data.as(Arrow::Int8Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == UInt8 %}
+      raw, _ = data.as(Arrow::UInt8Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == Int16 %}
+      raw, _ = data.as(Arrow::Int16Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == UInt16 %}
+      raw, _ = data.as(Arrow::UInt16Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == Int32 %}
+      raw, _ = data.as(Arrow::Int32Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == UInt32 %}
+      raw, _ = data.as(Arrow::UInt32Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == Int64 %}
+      raw, _ = data.as(Arrow::Int64Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == UInt64 %}
+      raw, _ = data.as(Arrow::UInt64Array).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == Float32 %}
+      raw, _ = data.as(Arrow::FloatArray).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% elsif T == Float64 %}
+      raw, _ = data.as(Arrow::DoubleArray).values
+      raw.to_unsafe.unsafe_as(Pointer(T))
+    {% else %}
+      {% raise "Unsupported type for ARROW backend" %}
+    {% end %}
   end
 end
 
