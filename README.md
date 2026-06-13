@@ -421,3 +421,161 @@ puts net.forward(x).value.map { |el| el > 0 ? 1 : 0}
 Review the documentation for full implementation details, and if something is missing,
 open an issue to add it!
 
+---
+
+## Release History (eltony81/num.cr fork)
+
+> Versions prior to `v1.2.0` are from the upstream `crystal-data/num.cr` project. This section documents only features and functions introduced from the fork creation onwards.
+
+---
+
+### v1.2.0 — Fork Origin
+- Removed implicit OpenBLAS library linking in `cblas.cr` to prevent symbol collision across distros.
+- Corrected CBLAS parameter signatures for `cblas_dtbmv`, `cblas_dtbsv`, and `cblas_dsymm`.
+- Added OpenCL dependencies to CI pipeline.
+
+### v1.2.1 — Complex Eigenvalue Support (initial)
+| Function | Description |
+|---|---|
+| `Tensor#eigvals_c` | Computes complex eigenvalues of a real matrix, returning a `Tensor(Complex, CPU(Complex))`. |
+| `Tensor#eig_c` | Computes complex eigenvalues and right eigenvectors simultaneously. |
+
+### v1.2.2 — Namespace & Stability Fix
+- Corrected `Tensor` namespace references across the complex eigenvalue implementation.
+- Stabilized `eig_c` / `eigvals_c` return types.
+
+### v1.3.3 — Dynamic LAPACK Workspace Queries
+- Replaced all hardcoded LAPACK workspace sizes with dynamic workspace queries (`lwork = -1`) in eigenvalue/eigenvector routines, eliminating memory allocation overhead and instability on large matrices.
+- Finalized LAPACK bindings for `dgeev` (real) and `zgeev` (complex) paths.
+
+### v1.3.6 — LAPACK Solver Consolidation
+- Restored missing linear algebra methods accidentally dropped during prior CI refactors (`solve`, `cholesky`, `svd`, `qr`).
+- Consolidated all LAPACK solver implementations into a single stable source.
+
+### v1.3.7 — Stable Release with `solve` Fix
+| Function | Description |
+|---|---|
+| `Tensor#solve` | Fixed `dgesv`/`sgesv` LAPACK call signatures; correct solution for general linear systems `Ax = b`. |
+| `Tensor#eigvals_c` | Declared stable in this release. |
+
+### v1.4.0 — v1.5.7 — CI & Linking Stabilization
+- Fixed OpenBLAS / CBLAS linking logic for Debian-based environments.
+- Added official `crystaldata/numci` container support for CI.
+- No new user-facing functions introduced.
+
+### v1.6.0 — Control Systems Linear Algebra
+| Function | Description |
+|---|---|
+| `Tensor#matrix_power(n)` | Computes `A^n` for integer exponents (positive, negative, and zero via SVD-based pseudoinverse). |
+| `Tensor#pinv` | Moore-Penrose pseudoinverse via SVD; useful for least-squares solutions in MIMO systems. |
+| `Tensor#kron(b)` | Kronecker (tensor) product of two matrices; used in Lyapunov/Sylvester vectorization. |
+| `Tensor#expm` | Matrix exponential via Higham's Padé approximation; critical for continuous-to-discrete ZOH conversion. |
+
+### v1.7.0 — Schur, Sylvester, Lyapunov, and Offset Diagonals
+| Function | Description |
+|---|---|
+| `Tensor#schur` | Schur decomposition `A = Z * T * Zᵀ` via LAPACK `dgees`; returns `{T, Z}`. |
+| `Tensor.sylvester(a, b, c)` | Solves the Sylvester equation `A*X + X*B = C` via Schur + Bartels-Stewart. |
+| `Tensor.lyapunov(a, q)` | Solves the continuous Lyapunov equation `A*X + X*Aᵀ + Q = 0`. |
+| `Tensor#diagonal(k)` | Zero-copy view of the `k`-th diagonal offset (positive = superdiagonal, negative = subdiagonal). |
+| `Tensor#map_parallel` | Parallel element-wise map using Crystal fibers for CPU-bound transformations. |
+
+### v1.7.1 — v1.7.4 — Examples & Documentation
+- Added reference examples for advanced linear algebra, SVD, QR, Cholesky, rank, and machine learning use-cases.
+- No new public functions introduced.
+
+### v1.7.5 — ELU Activation Layers
+| Function | Description |
+|---|---|
+| `Num::NN::Network#elu` | Adds an Exponential Linear Unit (ELU) activation layer to a network, with configurable α parameter. |
+
+### v1.7.6 — Einstein Summation Examples
+- Documented `Num::Einsum.einsum` performance benchmarks showing 18× speedup over manual loops.
+
+### v1.7.7 — Nine Advanced NumPy-Parity Features
+| Function | Description |
+|---|---|
+| `Tensor#[mask]` / `Tensor#[mask]=` | Boolean mask indexing and masked assignment. |
+| `Tensor#[index_array]` | Integer array fancy indexing. |
+| `Tensor#is_c_contiguous?` | Returns true if memory layout is C (row-major) contiguous. |
+| `Tensor#is_f_contiguous?` | Returns true if memory layout is Fortran (column-major) contiguous. |
+| `Tensor.hstack(tensors)` | Horizontal stacking of tensors along axis 1. |
+| `Tensor.vstack(tensors)` | Vertical stacking of tensors along axis 0. |
+| `Tensor#roll(shift, axis)` | Cyclically shifts elements along a given axis. |
+| `Tensor#flip(axis)` | Reverses elements along a given axis. |
+| `Tensor.concatenate(tensors, axis)` | Concatenates a list of tensors along a specified axis. |
+| `Num::Polynomial.new(coeffs)` | Constructs a polynomial; supports `+`, `*`, `#eval`, and `#derivative`. |
+| `Tensor.outer(a, b)` | Outer (tensor) product of two 1-D tensors. |
+| `Tensor.cross(a, b)` | Cross product of two 3-element 1-D tensors. |
+| `Tensor#save(path)` / `Tensor.load(path)` | Binary serialization and deserialization to disk. |
+| `Tensor.loadtxt(path)` | Loads a CSV or TSV file into a Tensor. |
+| `Tensor#accumulate(op)` | Running accumulation using a named operator (e.g. `:add`, `:multiply`). |
+| `Tensor.ufunc_outer(a, b, op)` | Pairwise outer application of a binary operator across two tensors. |
+| `Num::MaskedTensor` | Wraps a Tensor with a boolean mask; `sum` and `mean` ignore masked elements. |
+| `Num::SparseCOOTensor` | Coordinate-format sparse matrix; supports sparse-dense `matmul`. |
+
+### v1.8.0 — OpenCL 2.0+ Acceleration
+| Feature | Description |
+|---|---|
+| SVM allocation | Shared Virtual Memory via `clSVMAlloc` / `clSVMFree`; eliminates host-device copy overhead. |
+| Out-of-order queues | Device queues created with `CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE` for concurrent kernel execution. |
+| Generic Address Space | Kernels use generic pointer types for cleaner, more flexible indexing on OpenCL 2.0+ devices. |
+| Queue customization | API to create custom queues with high-priority and profiling flags. |
+
+### v1.9.0 — v1.10.0 — Version Bumps
+- No new user-facing functions.
+
+### v1.11.0 — Zero-Copy Arrow Integration
+| Function | Description |
+|---|---|
+| `Arrow::Array.import(schema, array)` | Imports an Arrow array from an external C Data Interface `ArrowArray` / `ArrowSchema`. |
+| `Arrow::Array#export` | Exports an Arrow array to a C Data Interface `ArrowArray` struct (zero-copy). |
+
+### v1.12.0 — Apache Arrow Feature Documentation
+- Documented Feather and Parquet file I/O (`Arrow::FeatherWriter`, `Arrow::ParquetWriter`).
+- Documented CUDA zero-copy GPU memory sharing (`Arrow::CudaDeviceManager`, `Arrow::CudaBuffer`).
+- Documented Flight RPC streaming (`Arrow::FlightClient`, `Arrow::FlightServer`).
+- Included a complete Arrow usage example in `examples/`.
+
+### v1.13.0 — Arrow Compute Delegation
+| Feature | Description |
+|---|---|
+| Arrow Compute offload | Arithmetic operations (`+`, `-`, `*`, `/`), in-place ops, and unary `-` on ARROW-backed tensors are delegated to the Arrow C++ Compute Engine (SIMD-accelerated: AVX2, AVX-512, ARM Neon). |
+| `Tensor#raw_pointer` | Exposes a raw memory pointer to the underlying Arrow buffer, bypassing GLib overhead for low-level iteration. |
+
+### v1.23.0 — Tag Housekeeping
+- Bumped version to avoid numbering collision.
+- No new user-facing functions.
+
+### v1.24.0 — In-Place ARROW Math Optimization
+| Feature | Description |
+|---|---|
+| In-place Arrow ops | `add!`, `subtract!`, `multiply!`, `divide!`, and unary `negate` on ARROW backend now use Arrow Compute directly without intermediate allocations. |
+
+### v1.24.1 — CPU-to-Arrow Converter
+| Function | Description |
+|---|---|
+| `Tensor#arrow` | Converts a CPU-backed tensor to an ARROW-backed tensor with a zero-copy transfer where possible. |
+
+### v1.24.2 — SIMD Mode Documentation
+- Added `-Darrow` compile-flag documentation to README.
+- Documented SIMD dispatch behavior and supported operations.
+
+### v1.24.3 — Dynamic Backend Dispatch
+| Feature | Description |
+|---|---|
+| Auto-dispatch for CPU ops | At compile-time with `-Darrow` / `-Dopencl`, CPU arithmetic (`+`, `-`, `*`, `/`) and negate automatically route to Arrow SIMD (size ≥ 1,000) or OpenCL GPU (size ≥ 1,000,000) based on tensor size thresholds. |
+
+### v1.25.0 — OpenCL Sub-Buffer Support
+| Function | Description |
+|---|---|
+| `Tensor#sub_tensor(offset, shape)` | Creates a sub-tensor backed by an OpenCL sub-buffer (zero-copy region of a parent GPU buffer). |
+
+### v1.25.1 — ClInfo Class Fix
+- Fixed `ClInfo` structure declaration from `struct` to `class` to resolve Crystal GC management issues with OpenCL device metadata.
+
+### v1.26.0 — Arrow v1.4.0 & Upstream Alea
+- Updated `arrow.cr` dependency to `v1.4.0`.
+- Reverted `alea` dependency from the `eltony81/alea` fork back to the upstream `crystal-data/alea`, eliminating one maintained fork.
+- Updated OpenCL 2.0+ documentation with full SVM and queue customization examples.
+
