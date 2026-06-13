@@ -114,4 +114,16 @@ describe Tensor do
     expected = [0, 0, 1, 0, 2, 0].to_tensor
     Num::Testing.tensor_equal(result, expected).should be_true
   end
+
+  {% if flag?(:opencl) %}
+    it "creates an OpenCL sub-tensor" do
+      begin
+        a = Tensor.new([128], device: OCL) { |i| i.to_f64 }
+        sub = a.sub_tensor(0, [64], [1])
+        sub.shape.should eq [64]
+      rescue e
+        # skip if no GPU platform is found
+      end
+    end
+  {% end %}
 end

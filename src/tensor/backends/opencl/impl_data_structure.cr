@@ -36,8 +36,13 @@ class OCL(T) < Num::Backend::Storage(T)
   getter total_size : Int32
 
   # Returns the underlying OpenCL memory buffer associated with a `Tensor`
-  def to_unsafe : LibCL::ClMem | Cl::SVMPointer
-    @data
+  def to_unsafe : LibCL::ClMem
+    data_ptr = @data
+    if data_ptr.is_a?(Cl::SVMPointer)
+      data_ptr.raw
+    else
+      data_ptr
+    end
   end
 
   def is_svm? : Bool

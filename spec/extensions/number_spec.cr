@@ -41,9 +41,9 @@ describe Number do
   end
 
   it "should divide against a Tensor" do
-    expected = [12, 3, 1].to_tensor
-    result = 12 / [1, 4, 12].to_tensor
-    Num::Testing.tensor_equal(expected, result).should be_true
+    expected = [12.0, 3.0, 1.0].to_tensor
+    result = 12.0 / [1.0, 4.0, 12.0].to_tensor
+    Num::Testing.tensor_equal(expected.as(Tensor(Float64, CPU(Float64))), result.as(Tensor(Float64, CPU(Float64)))).should be_true
   end
 
   it "should exponentiate against a Tensor" do
