@@ -1,9 +1,12 @@
 name: num
 version: 1.9.0
-
+description: A high-performance scientific computing and n-dimensional Tensor library for Crystal.
+homepage: https://github.com/eltony81/num.cr
+repository: https://github.com/eltony81/num.cr
 
 authors:
   - Chris Zimmerman <chris-zimmerman@live.com>
+  - eltony81 <antonio.difluri@gmail.com>
 
 crystal: ">= 1.0.0"
 
@@ -14,7 +17,7 @@ dependencies:
     github: eltony81/opencl.cr
     branch: master
   alea:
-    github: nin93/alea
+    github: eltony81/alea
   arrow:
     github: eltony81/arrow.cr
     branch: master

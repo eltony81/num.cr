@@ -1,15 +1,15 @@
-![num.cr](https://raw.githubusercontent.com/crystal-data/bottle/rename/static/numcr_logo.png)
+![num.cr](https://raw.githubusercontent.com/eltony81/bottle/rename/static/numcr_logo.png)
 
-[![Join the chat at https://gitter.im/crystal-data/bottle](https://badges.gitter.im/crystal-data/bottle.svg)](https://gitter.im/crystal-data/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-![Crystal CI](https://github.com/crystal-data/num.cr/workflows/Crystal%20CI/badge.svg)
+[![Join the chat at https://gitter.im/eltony81/bottle](https://badges.gitter.im/eltony81/bottle.svg)](https://gitter.im/eltony81/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![Crystal CI](https://github.com/eltony81/num.cr/workflows/Crystal%20CI/badge.svg)
 ![Version](https://img.shields.io/badge/version-1.7.7-blue)
 
 Num.cr is the core shard needed for scientific computing with Crystal
 
-- **Website:** https://crystal-data.github.io/num.cr
-- **API Documentation:** https://crystal-data.github.io/num.cr/
-- **Source code:** https://github.com/crystal-data/num.cr
-- **Bug reports:** https://github.com/crystal-data/num.cr/issues
+- **Website:** https://eltony81.github.io/num.cr
+- **API Documentation:** https://eltony81.github.io/num.cr/
+- **Source code:** https://github.com/eltony81/num.cr
+- **Bug reports:** https://github.com/eltony81/num.cr/issues
 
 It provides:
 

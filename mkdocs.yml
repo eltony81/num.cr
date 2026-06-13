@@ -1,6 +1,6 @@
 site_name: Num.cr
-site_url: https://crystal-data.github.io/num.cr/
-repo_url: https://github.com/crystal-data/num.cr
+site_url: https://eltony81.github.io/num.cr/
+repo_url: https://github.com/eltony81/num.cr
 edit_uri: blob/master/docs/
 
 theme:
