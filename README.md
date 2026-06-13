@@ -29,6 +29,12 @@ This fork is maintained to support control theory applications and robust comput
   - Cleaned up implicit OpenBLAS library linking in `cblas.cr` to prevent collision issues across different platform/distro environments.
 - **Robust LAPACK Solver Integration**: Resolved alignment/solver issues in `solve` (calling LAPACK solver like `sgesv`/`dgesv`).
 - **Improved CI Pipelines**: Added support for standard Debian-based environments and official test containers by explicitly resolving dependency libraries (`openblas`, `clblast`, `arrow`, `atlas`, `libcblas-dev`).
+- **Apache Arrow Features & Performance (eltony81/arrow.cr 1.2.0)**:
+  - **C Data Interface ABI**: Implemented zero-copy export/import support via `Arrow::Array.import` and `Arrow::Array#export`.
+  - **Parquet File I/O**: Exposed structures for tables (`Arrow::Table`), schemas (`Arrow::Schema`), fields (`Arrow::Field`), and a parquet writer (`Arrow::ParquetWriter`) to write tables to Parquet files on disk.
+  - **Compute Engine**: Added initialization helper `Arrow.initialize_compute` to set up the Arrow compute engine.
+  - **Arrow Flight Client**: Added stub implementations for Apache Arrow Flight client connections (`Arrow::FlightClient`).
+  - **Raw Pointer Performance**: Bypassed GLib overhead for element-wise and buffer iteration by caching and exposing raw memory pointers (`#raw_pointer`), allowing fast direct memory operations on Arrow buffers.
 
 ## Prerequisites
 
@@ -52,7 +58,7 @@ Add this to your applications `shard.yml`
 dependencies:
   num:
     github: eltony81/num.cr
-    version: ~> 1.7.7
+    version: ~> 1.12.0
 ```
 
 Several third-party libraries are required to use certain features of `Num.cr`.
@@ -80,7 +86,7 @@ The library has been tested and run successfully with the following dependency a
 | **OpenCL** | System Library | `2.3.4` (via `ocl-icd`) | GPU acceleration support |
 | **opencl.cr** | Shard | `0.2.1` | Crystal bindings for OpenCL |
 | **alea** | Shard | `0.3.0` | Random number generation library |
-| **arrow.cr** | Shard | `0.1.0` | Apache Arrow bindings |
+| **arrow.cr** | Shard | `1.2.0` | Apache Arrow bindings |
 
 ## Just show me the code
 
