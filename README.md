@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/eltony81/bottle](https://badges.gitter.im/eltony81/bottle.svg)](https://gitter.im/eltony81/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Crystal CI](https://github.com/eltony81/num.cr/workflows/Crystal%20CI/badge.svg)
-![Version](https://img.shields.io/badge/version-1.24.3-blue)
+![Version](https://img.shields.io/badge/version-1.26.0-blue)
 
 Num.cr is the core shard needed for scientific computing with Crystal
 
@@ -120,7 +120,7 @@ The library has been tested and run successfully with the following dependency a
 
 ### OpenCL 2.0+ Acceleration Features
 
-Starting in version `1.25.1`, `num.cr` utilizes `opencl.cr` `~> 0.4.0` to leverage OpenCL 2.0+ APIs. This adds several features for high-performance GPU scientific computing:
+Starting in version `1.26.0`, `num.cr` utilizes `opencl.cr` `~> 0.4.0` to leverage OpenCL 2.0+ APIs. This adds several features for high-performance GPU scientific computing:
 
 1. **Shared Virtual Memory (SVM)**: By using `clSVMAlloc` and `clSVMFree` under the hood when SVM is supported by your device, `num.cr` eliminates host-device buffer copying overhead. Hosts and devices share a single, unified virtual address space, enabling zero-copy pointer access and much faster page-mapped writes/reads.
 2. **Out-of-Order Execution Queues**: Device queues are created with out-of-order execution enabled (`CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE`). This enables the driver to execute independent kernels concurrently on the GPU without waiting for previous commands to finish, maximizing hardware utilization.
