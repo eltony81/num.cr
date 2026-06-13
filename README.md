@@ -67,6 +67,21 @@ They are:
 While not at all required, they provide additional functionality than is
 provided by the basic library.
 
+### Dependency Versions
+
+The library has been tested and run successfully with the following dependency and system library versions:
+
+| Dependency | Type | Version | Note |
+|---|---|---|---|
+| **Crystal** | Language | `>= 1.0.0` | Core language runtime |
+| **OpenBLAS** | System Library | `0.3.33` | Highly optimized BLAS/LAPACK implementation |
+| **BLAS / CBLAS** | System Library | `3.12.1` | Basic Linear Algebra Subprograms |
+| **LAPACK** | System Library | `3.12.1` | Linear Algebra Package |
+| **OpenCL** | System Library | `2.3.4` (via `ocl-icd`) | GPU acceleration support |
+| **opencl.cr** | Shard | `0.2.1` | Crystal bindings for OpenCL |
+| **alea** | Shard | `0.3.0` | Random number generation library |
+| **arrow.cr** | Shard | `0.1.0` | Apache Arrow bindings |
+
 ## Just show me the code
 
 The core data structure implemented by `Num.cr` is the `Tensor`, an N-dimensional
