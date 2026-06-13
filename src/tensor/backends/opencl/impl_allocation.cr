@@ -35,137 +35,111 @@ class OCL(T) < Num::Backend::Storage(T)
   # ```
   # OCL.new([100], Num::RowMajor)
   # ```
+  private def allocate_buffer(size : UInt64, dtype : U.class) : LibCL::ClMem | Cl::SVMPointer forall U
+    if Num::ClContext.instance.svm_supported?
+      ptr = LibCL.cl_svm_alloc(Num::ClContext.instance.context, 1_u64 << 0, size * sizeof(U), 0_u32)
+      if ptr.nil?
+        raise "Failed to allocate SVM pointer"
+      end
+      Cl::SVMPointer.new(ptr)
+    else
+      Cl.buffer(Num::ClContext.instance.context, size, dtype: U)
+    end
+  end
+
   def initialize(shape : Array(Int), order : Num::OrderType)
-    @data = Cl.buffer(Num::ClContext.instance.context, shape.product.to_u64, dtype: T)
+    @data = allocate_buffer(shape.product.to_u64, T)
     @shape = metadata_to_buffer(shape.map &.to_i)
     @strides = metadata_to_buffer(Num::Internal.shape_to_strides(shape, order))
     @total_size = shape.product
   end
 
-  # Initialize an OpenCL storage from an initial capacity.
-  # The data will be filled with zeros
-  #
-  # ## Arguments
-  #
-  # * shape : `Array(Int)` - Shape for parent `Tensor`
-  # * strides : `Array(Int)` - Strides for parent `Tensor`
-  #
-  # ## Examples
-  #
-  # ```
-  # OCL.new([100], [1])
-  # ```
   def initialize(shape : Array(Int), strides : Array(Int))
-    @data = Cl.buffer(Num::ClContext.instance.context, shape.product.to_u64, dtype: T)
+    @data = allocate_buffer(shape.product.to_u64, T)
     @shape = metadata_to_buffer(shape.map &.to_i)
     @strides = metadata_to_buffer(strides.map &.to_i)
     @total_size = shape.product
   end
 
-  # Initialize an OpenCL storage from an initial capacity and
-  # an initial value, which will fill the buffer
-  #
-  # ## Arguments
-  #
-  # * shape : `Array(Int)` - Shape for parent `Tensor`
-  # * order : `Num::OrderType` - Memory layout for parent `Tensor`
-  # * value : `T` - Value to initially populate the buffer
-  #
-  # ## Examples
-  #
-  # ```
-  # OCL.new([10, 10], Num::RowMajor, 3.4)
-  # ```
   def initialize(shape : Array(Int), order : Num::OrderType, value : T)
-    @data = Cl.buffer(Num::ClContext.instance.context, shape.product.to_u64, dtype: T)
+    @data = allocate_buffer(shape.product.to_u64, T)
     @shape = metadata_to_buffer(shape.map &.to_i)
     @strides = metadata_to_buffer(Num::Internal.shape_to_strides(shape, order))
     @total_size = shape.product
-    Cl.fill(Num::ClContext.instance.queue, @data, value, shape.product.to_u64)
+    if (data_ptr = @data).is_a?(Cl::SVMPointer)
+      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      data_ptr.raw.as(T*).map!(shape.product) { value }
+      Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+    else
+      Cl.fill(Num::ClContext.instance.queue, data_ptr, value, shape.product.to_u64)
+    end
   end
 
-  # Initialize an OpenCL storage from an initial capacity and
-  # an initial value, which will fill the buffer
-  #
-  # ## Arguments
-  #
-  # * shape : `Array(Int)` - Shape for parent `Tensor`
-  # * strides : `Array(Int)` - Strides for parent `Tensor`
-  # * value : `T` - Value to initially populate the buffer
-  #
-  # ## Examples
-  #
-  # ```
-  # OCL.new([10, 10], [10, 1], 3.4)
-  # ```
   def initialize(shape : Array(Int), strides : Array(Int), value : T)
-    @data = Cl.buffer(Num::ClContext.instance.context, shape.product.to_u64, dtype: T)
+    @data = allocate_buffer(shape.product.to_u64, T)
     @shape = metadata_to_buffer(shape.map &.to_i)
     @strides = metadata_to_buffer(strides.map &.to_i)
     @total_size = shape.product
-    Cl.fill(Num::ClContext.instance.queue, @data, value, shape.product.to_u64)
+    if (data_ptr = @data).is_a?(Cl::SVMPointer)
+      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      data_ptr.raw.as(T*).map!(shape.product) { value }
+      Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+    else
+      Cl.fill(Num::ClContext.instance.queue, data_ptr, value, shape.product.to_u64)
+    end
   end
 
-  # Initialize an OpenCL storage from a standard library Crystal
-  # pointer
-  #
-  # ## Arguments
-  #
-  # * hostptr : `Pointer(T)` - Stdlib Crystal pointer containing the `Tensor`s
-  #   data
-  # * shape : `Array(Int)` - Shape for parent `Tensor`
-  # * strides : `Array(Int)` - Strides for parent `Tensor`
-  #
-  # ## Examples
-  #
-  # ```
-  # ptr = Pointer(Int32).malloc(9)
-  # OCL.new(ptr, [3, 3], [3, 1])
-  # ```
   def initialize(hostptr : Pointer(T), shape : Array(Int), strides : Array(Int))
-    @data = Cl.buffer(Num::ClContext.instance.context, shape.product.to_u64, dtype: T)
+    @data = allocate_buffer(shape.product.to_u64, T)
     @shape = metadata_to_buffer(shape.map &.to_i)
     @strides = metadata_to_buffer(strides.map &.to_i)
     @total_size = shape.product
-    Cl.write(Num::ClContext.instance.queue, hostptr, @data, (shape.product * sizeof(T)).to_u64)
+    if (data_ptr = @data).is_a?(Cl::SVMPointer)
+      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      data_ptr.raw.as(T*).copy_from(hostptr, shape.product)
+      Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+    else
+      Cl.write(Num::ClContext.instance.queue, hostptr, data_ptr, (shape.product * sizeof(T)).to_u64)
+    end
   end
 
   def update_metadata(shape : Array(Int32), strides : Array(Int32))
+    free_buffer(@shape)
+    free_buffer(@strides)
     @shape = metadata_to_buffer(shape)
     @strides = metadata_to_buffer(strides)
   end
 
-  # Return a generic class of a specific generic type, to allow
-  # for explicit return types in functions that return a different
-  # storage type than the parent Tensor
-  #
-  # ```
-  # a = OCL(Float32).new([10])
-  #
-  # # Cannot do
-  # # a.class.new ...
-  #
-  # a.class.base(Float64).new([10])
-  # ```
   def self.base(dtype : U.class) : OCL(U).class forall U
     OCL(U)
   end
 
-  private def metadata_to_buffer(arr : Array(Int32))
+  private def metadata_to_buffer(arr : Array(Int32)) : LibCL::ClMem | Cl::SVMPointer
     if arr == [] of Int32
       arr = [1]
     end
-    buffer = Cl.buffer(Num::ClContext.instance.context, arr.size.to_u64, dtype: Int32)
-    Cl.write(Num::ClContext.instance.queue, arr.to_unsafe, buffer, (arr.size * sizeof(Int32)).to_u64)
-    buffer
+    buf = allocate_buffer(arr.size.to_u64, Int32)
+    if buf.is_a?(Cl::SVMPointer)
+      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, buf.raw, (arr.size * sizeof(Int32)).to_u64)
+      buf.raw.as(Int32*).copy_from(arr.to_unsafe, arr.size)
+      Cl.unmap_svm(Num::ClContext.instance.queue, buf.raw)
+    else
+      Cl.write(Num::ClContext.instance.queue, arr.to_unsafe, buf, (arr.size * sizeof(Int32)).to_u64)
+    end
+    buf
   end
 
-  # Releases the underlying `LibCL::ClMem` buffers containing the
-  # data for a `Tensor`, as well as the buffers containing the
-  # shape and strides for the `Tensor`
+  private def free_buffer(buf : LibCL::ClMem | Cl::SVMPointer)
+    if buf.is_a?(Cl::SVMPointer)
+      LibCL.cl_svm_free(Num::ClContext.instance.context, buf.raw)
+    else
+      Cl.release_buffer(buf)
+    end
+  end
+
   def finalize
-    Cl.release_buffer(@data)
-    Cl.release_buffer(@shape)
-    Cl.release_buffer(@strides)
+    free_buffer(@data)
+    free_buffer(@shape)
+    free_buffer(@strides)
   end
 end

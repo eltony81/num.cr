@@ -37,17 +37,25 @@ module Num
   # ```
   def to_a(arr : Tensor(U, OCL(U))) forall U
     a = Array(U).new(arr.size, 0)
-    LibCL.cl_enqueue_read_buffer(
-      Num::ClContext.instance.queue,
-      arr.data.to_unsafe,
-      LibCL::CL_TRUE,
-      0_u64,
-      (arr.data.total_size * sizeof(U)).to_u64,
-      a.to_unsafe,
-      0_u32,
-      nil,
-      nil
-    )
+    storage = arr.data
+    data_field = storage.data
+    if data_field.is_a?(Cl::SVMPointer)
+      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::READ.value, data_field.raw, (storage.total_size * sizeof(U)).to_u64)
+      a.to_unsafe.copy_from(data_field.raw.as(U*) + arr.offset, arr.size)
+      Cl.unmap_svm(Num::ClContext.instance.queue, data_field.raw)
+    else
+      LibCL.cl_enqueue_read_buffer(
+        Num::ClContext.instance.queue,
+        data_field,
+        LibCL::CL_TRUE,
+        0_u64,
+        (storage.total_size * sizeof(U)).to_u64,
+        a.to_unsafe,
+        0_u32,
+        nil,
+        nil
+      )
+    end
     a
   end
 
@@ -66,17 +74,25 @@ module Num
   # ```
   def cpu(arr : Tensor(U, OCL(U))) forall U
     ptr = Pointer(U).malloc(arr.data.total_size)
-    LibCL.cl_enqueue_read_buffer(
-      Num::ClContext.instance.queue,
-      arr.data.to_unsafe,
-      LibCL::CL_TRUE,
-      0_u64,
-      (arr.data.total_size * sizeof(U)).to_u64,
-      ptr,
-      0_u32,
-      nil,
-      nil
-    )
+    storage = arr.data
+    data_field = storage.data
+    if data_field.is_a?(Cl::SVMPointer)
+      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::READ.value, data_field.raw, (storage.total_size * sizeof(U)).to_u64)
+      ptr.copy_from(data_field.raw.as(U*), storage.total_size)
+      Cl.unmap_svm(Num::ClContext.instance.queue, data_field.raw)
+    else
+      LibCL.cl_enqueue_read_buffer(
+        Num::ClContext.instance.queue,
+        data_field,
+        LibCL::CL_TRUE,
+        0_u64,
+        (storage.total_size * sizeof(U)).to_u64,
+        ptr,
+        0_u32,
+        nil,
+        nil
+      )
+    end
     Tensor(U, CPU(U)).new(
       CPU(U).new(ptr, arr.shape, arr.strides),
       arr.shape,

@@ -1,5 +1,5 @@
 name: num
-version: 1.7.7
+version: 1.8.0
 
 
 authors:
@@ -11,8 +11,10 @@ license: MIT
 
 dependencies:
   opencl:
-    github: crystal-data/opencl.cr
+    github: eltony81/opencl.cr
+    branch: master
   alea:
     github: nin93/alea
   arrow:
-    github: crystal-data/arrow.cr
+    github: eltony81/arrow.cr
+    branch: master

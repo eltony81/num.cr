@@ -26,8 +26,8 @@ module Num
     "
     int opencl_getIndexOfElementID(
       const int rank,
-      __global const int * restrict const shape,
-      __global const int * restrict const strides,
+      generic const int * restrict const shape,
+      generic const int * restrict const strides,
       const int offset,
       const int element_id) {
       int real_idx = offset;
@@ -54,15 +54,15 @@ module Num
       if i == 0
         "const int rank,
         const int len,
-        __global const int * restrict #{arg}_shape,
-        __global const int * restrict #{arg}_strides,
+        generic const int * restrict #{arg}_shape,
+        generic const int * restrict #{arg}_strides,
         const int #{arg}_offset,
-        __global \#{dtype} * restrict #{arg},"
+        generic \#{dtype} * restrict #{arg},"
       else
-        "__global const int * restrict #{arg}_shape,
-        __global const int * restrict #{arg}_strides,
+        "generic const int * restrict #{arg}_shape,
+        generic const int * restrict #{arg}_strides,
         const int #{arg}_offset,
-        __global const \#{dtype} * restrict const #{arg},"
+        generic const \#{dtype} * restrict const #{arg},"
       end
     end
 

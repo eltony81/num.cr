@@ -28,22 +28,60 @@ struct Num::Internal::ClInfo
   getter device : LibCL::ClDeviceId
   getter context : LibCL::ClContext
   getter queue : LibCL::ClCommandQueue
+  getter? svm_supported : Bool
 
   def initialize(@device : LibCL::ClDeviceId, @context : LibCL::ClContext, @queue : LibCL::ClCommandQueue)
+    @svm_supported = Cl.svm_supported?(@device)
   end
 end
 
 # :nodoc:
 class Num::ClContext
-  {% if flag?(:opencl_any) %}
-    class_getter instance : Num::Internal::ClInfo { Num::Internal::ClInfo.new(*Cl.single_device_defaults) }
-  {% else %}
-    class_getter instance : Num::Internal::ClInfo { Num::Internal::ClInfo.new(*Cl.first_gpu_defaults) }
-  {% end %}
+  def self.create_optimized_queue(context : LibCL::ClContext, device : LibCL::ClDeviceId) : LibCL::ClCommandQueue
+    # Try out-of-order execution + high priority
+    properties = [
+      LibCL::CL_QUEUE_PROPERTIES,
+      LibCL::CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
+      LibCL::CL_QUEUE_PRIORITY_KHR,
+      LibCL::CL_QUEUE_PRIORITY_HIGH_KHR,
+      0_u64
+    ]
+    status = 0
+    queue = LibCL.cl_create_command_queue_with_properties(context, device, properties, pointerof(status))
+    if status == 0
+      return queue
+    end
+
+    # Try out-of-order execution only
+    properties = [
+      LibCL::CL_QUEUE_PROPERTIES,
+      LibCL::CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
+      0_u64
+    ]
+    queue = LibCL.cl_create_command_queue_with_properties(context, device, properties, pointerof(status))
+    if status == 0
+      return queue
+    end
+
+    # Fallback to standard command queue
+    Cl.command_queue_for(context, device)
+  end
+
+  class_getter instance : Num::Internal::ClInfo do
+    platform = Cl.first_platform
+    device = {% if flag?(:opencl_any) %}
+               Cl.get_devices(platform)[0]
+             {% else %}
+               Cl.get_devices(platform, LibCL::CL_DEVICE_TYPE_GPU)[0]
+             {% end %}
+    context = Cl.create_context([device])
+    queue = create_optimized_queue(context, device)
+    Num::Internal::ClInfo.new(device, context, queue)
+  end
 
   def self.set_device(device)
     context = Cl.create_context([device])
-    queue = Cl.command_queue_for(context, device)
+    queue = create_optimized_queue(context, device)
     @@instance = Num::Internal::ClInfo.new(device, context, queue)
   end
 end

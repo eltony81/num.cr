@@ -59,8 +59,8 @@ abstract class Num::Kernel(T)
     "
     int opencl_getIndexOfElementID(
       const int rank,
-      __global const int * restrict const shape,
-      __global const int * restrict const strides,
+      generic const int * restrict const shape,
+      generic const int * restrict const strides,
       const int offset,
       const int element_id) {
       int real_idx = offset;

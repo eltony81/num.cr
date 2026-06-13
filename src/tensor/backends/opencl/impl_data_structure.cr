@@ -23,21 +23,29 @@
 
 class OCL(T) < Num::Backend::Storage(T)
   # Data buffer containing the data associated with the parent `Tensor`
-  getter data : LibCL::ClMem
+  getter data : LibCL::ClMem | Cl::SVMPointer
 
   # Data buffer containing the shape associated with the parent `Tensor`
-  getter shape : LibCL::ClMem
+  getter shape : LibCL::ClMem | Cl::SVMPointer
 
   # Data buffer containing the strides associated with the parent `Tensor`
-  getter strides : LibCL::ClMem
+  getter strides : LibCL::ClMem | Cl::SVMPointer
 
   # Total size of the underlying data buffer.  Keeps track of the total
   # size of a buffer if a `Tensor` has been sliced
   getter total_size : Int32
 
   # Returns the underlying OpenCL memory buffer associated with a `Tensor`
-  def to_unsafe : LibCL::ClMem
+  def to_unsafe : LibCL::ClMem | Cl::SVMPointer
     @data
+  end
+
+  def is_svm? : Bool
+    @data.is_a?(Cl::SVMPointer)
+  end
+
+  def to_unsafe_svm : Cl::SVMPointer
+    @data.as(Cl::SVMPointer)
   end
 end
 
