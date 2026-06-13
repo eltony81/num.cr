@@ -42,6 +42,9 @@ class Tensor(T, S)
   # -a # => [-1, -2, -3]
   # ```
   alias_unary_op_to_backend negate, :-
+  def arrow
+    Num.arrow(self)
+  end
 
   private macro alias_binary_op_to_backend(name, op)
     def {{name.id}}(other)

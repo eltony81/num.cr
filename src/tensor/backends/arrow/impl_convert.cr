@@ -154,4 +154,13 @@ module Num
     storage = ARROW(U).new(raw_ptr, shape, strides)
     Tensor(U, ARROW(U)).new(storage, shape, strides, 0)
   end
+
+  # Places a CPU Tensor onto Apache Arrow backend.
+  def arrow(arr : Tensor(U, CPU(U))) : Tensor(U, ARROW(U)) forall U
+    unless arr.flags.contiguous?
+      arr = arr.dup
+    end
+    storage = ARROW(U).new(arr.to_unsafe, arr.shape, arr.strides)
+    Tensor(U, ARROW(U)).new(storage, arr.shape)
+  end
 end

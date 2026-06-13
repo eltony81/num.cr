@@ -62,5 +62,12 @@ describe Tensor do
       res = -a
       res.to_a.should eq([-1, -2, -3])
     end
+
+    it "converts a CPU tensor to ARROW using .arrow" do
+      a = [1, 2, 3].to_tensor
+      a_arrow = a.arrow
+      a_arrow.is_a?(Tensor(Int32, ARROW(Int32))).should be_true
+      a_arrow.to_a.should eq([1, 2, 3])
+    end
   {% end %}
 end
