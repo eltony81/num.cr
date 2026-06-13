@@ -44,6 +44,31 @@ module Num
       a : Tensor(U, CPU(U)),
       b : Tensor(V, CPU(V))
     ) : Tensor forall U, V
+      size = a.size
+
+      {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
+        {% if flag?(:opencl) %}
+          if size >= 1_000_000 &&
+             (U == Int32 || U == UInt32 || U == Float32 || U == Float64) &&
+             (V == Int32 || V == UInt32 || V == Float32 || V == Float64) &&
+             U == V
+            a_ocl = a.opencl
+            b_ocl = b.opencl
+            res_ocl = Num.{{name}}(a_ocl, b_ocl)
+            return res_ocl.cpu
+          end
+        {% end %}
+
+        {% if flag?(:arrow) %}
+          if size >= 1_000 && a.shape == b.shape && a.flags.contiguous? && b.flags.contiguous?
+            a_arr = a.arrow
+            b_arr = b.arrow
+            res_arr = Num.{{name}}(a_arr, b_arr)
+            return res_arr.cpu
+          end
+        {% end %}
+      {% end %}
+
       a.map(b) do |i, j|
         i {{operator.id}} j
       end
@@ -72,6 +97,32 @@ module Num
       a : Tensor(U, CPU(U)),
       b : Tensor(V, CPU(V))
     ) : Nil forall U, V
+      size = a.size
+
+      {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
+        {% if flag?(:opencl) %}
+          if size >= 1_000_000 &&
+             (U == Int32 || U == UInt32 || U == Float32 || U == Float64) &&
+             (V == Int32 || V == UInt32 || V == Float32 || V == Float64) &&
+             U == V
+            a_ocl = a.opencl
+            b_ocl = b.opencl
+            Num.{{name}}!(a_ocl, b_ocl)
+            a.to_unsafe.copy_from(a_ocl.cpu.to_unsafe, a.size)
+            return
+          end
+        {% end %}
+
+        {% if flag?(:arrow) %}
+          if size >= 1_000 && a.shape == b.shape && a.flags.contiguous? && b.flags.contiguous?
+            a_arr = a.arrow
+            b_arr = b.arrow
+            Num.{{name}}!(a_arr, b_arr)
+            return
+          end
+        {% end %}
+      {% end %}
+
       a.map!(b) do |i, j|
         i {{operator.id}} j
       end
@@ -96,6 +147,28 @@ module Num
       a : Tensor(U, CPU(U)),
       b : Number | Complex
     ) : Tensor forall U
+      size = a.size
+
+      {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
+        {% if flag?(:opencl) %}
+          if size >= 1_000_000 &&
+             (U == Int32 || U == UInt32 || U == Float32 || U == Float64) &&
+             b.is_a?(Number)
+            a_ocl = a.opencl
+            res_ocl = Num.{{name}}(a_ocl, U.new(b))
+            return res_ocl.cpu
+          end
+        {% end %}
+
+        {% if flag?(:arrow) %}
+          if size >= 1_000 && a.flags.contiguous? && b.is_a?(Number)
+            a_arr = a.arrow
+            res_arr = Num.{{name}}(a_arr, U.new(b))
+            return res_arr.cpu
+          end
+        {% end %}
+      {% end %}
+
       a.map do |i|
         i {{operator.id}} b
       end
@@ -118,6 +191,29 @@ module Num
     # Num.{{ name }}!(a, b)
     # ```
     def {{name}}!(a : Tensor(U, CPU(U)), b : Number | Complex) : Nil forall U
+      size = a.size
+
+      {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
+        {% if flag?(:opencl) %}
+          if size >= 1_000_000 &&
+             (U == Int32 || U == UInt32 || U == Float32 || U == Float64) &&
+             b.is_a?(Number)
+            a_ocl = a.opencl
+            Num.{{name}}!(a_ocl, U.new(b))
+            a.to_unsafe.copy_from(a_ocl.cpu.to_unsafe, a.size)
+            return
+          end
+        {% end %}
+
+        {% if flag?(:arrow) %}
+          if size >= 1_000 && a.flags.contiguous? && b.is_a?(Number)
+            a_arr = a.arrow
+            Num.{{name}}!(a_arr, U.new(b))
+            return
+          end
+        {% end %}
+      {% end %}
+
       a.map! do |i|
         i {{operator.id}} b
       end
@@ -142,6 +238,28 @@ module Num
       a : Number | Complex,
       b : Tensor(U, CPU(U))
     ) : Tensor forall U
+      size = b.size
+
+      {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
+        {% if flag?(:opencl) %}
+          if size >= 1_000_000 &&
+             (U == Int32 || U == UInt32 || U == Float32 || U == Float64) &&
+             a.is_a?(Number)
+            b_ocl = b.opencl
+            res_ocl = Num.{{name}}(U.new(a), b_ocl)
+            return res_ocl.cpu
+          end
+        {% end %}
+
+        {% if flag?(:arrow) %}
+          if size >= 1_000 && b.flags.contiguous? && a.is_a?(Number)
+            b_arr = b.arrow
+            res_arr = Num.{{name}}(U.new(a), b_arr)
+            return res_arr.cpu
+          end
+        {% end %}
+      {% end %}
+
       b.map do |i|
         a {{operator.id}} i
       end
@@ -161,6 +279,24 @@ module Num
   # Num.negate(a) # => [-1, -2, -3]
   # ```
   def negate(a : Tensor(U, CPU(U))) : Tensor(U, CPU(U)) forall U
+    size = a.size
+
+    {% if flag?(:opencl) %}
+      if size >= 1_000_000 && (U == Int32 || U == UInt32 || U == Float32 || U == Float64)
+        a_ocl = a.opencl
+        res_ocl = Num.negate(a_ocl)
+        return res_ocl.cpu
+      end
+    {% end %}
+
+    {% if flag?(:arrow) %}
+      if size >= 1_000 && a.flags.contiguous?
+        a_arr = a.arrow
+        res_arr = Num.negate(a_arr)
+        return res_arr.cpu
+      end
+    {% end %}
+
     a.map do |i|
       -i
     end
