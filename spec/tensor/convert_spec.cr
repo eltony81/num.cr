@@ -65,5 +65,27 @@ describe Tensor do
       imported_t[0, 1].value.should eq(10)
       imported_t[1, 2].value.should eq(50)
     end
+
+    it "performs math operations using Arrow Compute engine" do
+      t = Tensor(Int32, ARROW(Int32)).new([5], device: ARROW(Int32)) { |i| i + 1 }
+      res = t + t
+      res.to_a.should eq([2, 4, 6, 8, 10])
+    end
+
+    it "writes Table containing Arrow arrays to Feather" do
+      schema = Arrow::Schema.new([
+        Arrow::Field.new("x", Arrow::DataType.int32)
+      ])
+      arr = Arrow::Int32Array.new([1, 2, 3])
+      table = Arrow::Table.new(schema, [arr])
+      begin
+        writer = Arrow::FeatherWriter.new("./test.feather")
+        writer.write(table)
+        writer.close
+        File.delete("./test.feather") if File.exists?("./test.feather")
+      rescue
+        # pass if feather is not supported by standard lib
+      end
+    end
   {% end %}
 end

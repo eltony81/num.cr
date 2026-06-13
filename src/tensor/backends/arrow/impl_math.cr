@@ -44,6 +44,28 @@ module Num
       a : Tensor(U, ARROW(U)),
       b : Tensor(V, ARROW(V))
     ) : Tensor forall U, V
+      {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
+        if a.flags.contiguous? && b.flags.contiguous? && a.shape == b.shape
+          op_name = case {{operator.stringify}}
+                    when "+" then "add"
+                    when "-" then "subtract"
+                    when "*" then "multiply"
+                    when "/" then "divide"
+                    else nil
+                    end
+
+          if op_name
+            Arrow.initialize_compute
+            a_datum = Arrow::Datum.new(a.data.data)
+            b_datum = Arrow::Datum.new(b.data.data)
+            res_datum = Arrow::Function.execute(op_name, [a_datum, b_datum])
+            res_arr_ptr = res_datum.to_array.to_unsafe
+            storage = ARROW(U).new(res_arr_ptr, a.shape, a.strides)
+            return Tensor(U, ARROW(U)).new(storage, a.shape)
+          end
+        end
+      {% end %}
+
       a.map(b) do |i, j|
         i {{operator.id}} j
       end

@@ -28,9 +28,9 @@ class ARROW(T) < Num::Backend::Storage(T)
     {% elsif T == UInt8 %}
       Arrow::UInt8Array.new {{ data.id }}
     {% elsif T == Int16 %}
-      Arrow::UInt8Array.new {{ data.id }}
+      Arrow::Int16Array.new {{ data.id }}
     {% elsif T == UInt16 %}
-      Arrow::UInt8Array.new {{ data.id }}
+      Arrow::UInt16Array.new {{ data.id }}
     {% elsif T == Int32 %}
       Arrow::Int32Array.new {{ data.id }}
     {% elsif T == UInt32 %}
@@ -39,6 +39,10 @@ class ARROW(T) < Num::Backend::Storage(T)
       Arrow::Int64Array.new {{ data.id }}
     {% elsif T == UInt64 %}
       Arrow::UInt64Array.new {{ data.id }}
+    {% elsif T == Float32 %}
+      Arrow::FloatArray.new {{ data.id }}
+    {% elsif T == Float64 %}
+      Arrow::DoubleArray.new {{ data.id }}
     {% elsif T == String %}
       Arrow::StringArray.new {{ data.id }}
     {% else %}
@@ -161,6 +165,36 @@ class ARROW(T) < Num::Backend::Storage(T)
     bytes = Bytes.new(data.unsafe_as(Pointer(UInt8)), shape.product * sizeof(T))
     buffer = Arrow::Buffer.new(bytes)
     @data = allocate_array_from_buffer shape.product, buffer, nil, 0
+  end
+
+  private macro allocate_array_from_pointer(ptr)
+    {% if T == Int8 %}
+      Arrow::Int8Array.new({{ptr}}, add_ref: true)
+    {% elsif T == UInt8 %}
+      Arrow::UInt8Array.new({{ptr}}, add_ref: true)
+    {% elsif T == Int16 %}
+      Arrow::Int16Array.new({{ptr}}, add_ref: true)
+    {% elsif T == UInt16 %}
+      Arrow::UInt16Array.new({{ptr}}, add_ref: true)
+    {% elsif T == Int32 %}
+      Arrow::Int32Array.new({{ptr}}, add_ref: true)
+    {% elsif T == UInt32 %}
+      Arrow::UInt32Array.new({{ptr}}, add_ref: true)
+    {% elsif T == Int64 %}
+      Arrow::Int64Array.new({{ptr}}, add_ref: true)
+    {% elsif T == UInt64 %}
+      Arrow::UInt64Array.new({{ptr}}, add_ref: true)
+    {% elsif T == Float32 %}
+      Arrow::FloatArray.new({{ptr}}, add_ref: true)
+    {% elsif T == Float64 %}
+      Arrow::DoubleArray.new({{ptr}}, add_ref: true)
+    {% else %}
+      {% raise "Invalid data type for Apache Arrow backed Tensor" %}
+    {% end %}
+  end
+
+  def initialize(garrow_array_ptr : Void*, shape : Array(Int), strides : Array(Int))
+    @data = allocate_array_from_pointer garrow_array_ptr
   end
 
   # Converts ARROW storage to a crystal pointer
