@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/eltony81/bottle](https://badges.gitter.im/eltony81/bottle.svg)](https://gitter.im/eltony81/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Crystal CI](https://github.com/eltony81/num.cr/workflows/Crystal%20CI/badge.svg)
-![Version](https://img.shields.io/badge/version-1.7.7-blue)
+![Version](https://img.shields.io/badge/version-1.24.3-blue)
 
 Num.cr is the core shard needed for scientific computing with Crystal
 
@@ -73,6 +73,22 @@ crystal build -Darrow --release src/your_app.cr
 When `-Darrow` is enabled:
 - Standard math operations (`+`, `-`, `*`, `/`), in-place operations (`add!`, `subtract!`, `multiply!`, `divide!`), and unary negation (`-`) on ARROW-backed Tensors are automatically offloaded to the C++ Apache Arrow Compute Engine, utilizing optimized SIMD execution (AVX2, AVX-512, or ARM Neon depending on hardware).
 - File I/O for Parquet/Feather and CUDA device sharing is fully operational.
+
+### Dynamic Backend Dispatch (CPU, Arrow SIMD, OpenCL GPU)
+
+Starting in `v1.24.3`, `num.cr` supports an automatic runtime dispatch mechanism for CPU element-wise arithmetic operations (`+`, `-`, `*`, `/`) and negation (`-`). When compiling with backend flags (`-Darrow`, `-Dopencl`), standard CPU-allocated tensors will dynamically route execution paths to the most appropriate backend based on size thresholds:
+
+- **OpenCL GPU Acceleration** (`-Dopencl` flag): If a CPU tensor has **$\ge 1,000,000$ elements** (and its datatype is supported by OpenCL like `Int32`, `UInt32`, `Float32`, `Float64`), it is automatically copied to the OpenCL GPU device, executed, and the result is copied back to CPU storage.
+- **Apache Arrow SIMD Acceleration** (`-Darrow` flag): For medium-scale datasets with **$1,000 \le \text{size} < 1,000,000$ elements** (and contiguous shape), the operation is automatically wrapped and executed on Apache Arrow's vectorized C++ compute engine.
+- **Standard CPU Loop**: For small datasets ($< 1,000$ elements), the operation falls back to standard CPU loops to bypass device memory overhead or API wrapping latencies.
+
+#### Activation & Selection Matrix:
+
+To compile your code, select the appropriate flags depending on your target workloads:
+
+*   **Arrow SIMD only**: `crystal build -Darrow --release src/your_app.cr`
+*   **OpenCL GPU only**: `crystal build -Dopencl --release src/your_app.cr`
+*   **Hybrid (Both backends)**: `crystal build -Darrow -Dopencl --release src/your_app.cr` (routes dynamically based on size thresholds).
 
 
 Several third-party libraries are required to use certain features of `Num.cr`.
