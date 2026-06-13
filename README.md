@@ -59,8 +59,21 @@ Add this to your applications `shard.yml`
 dependencies:
   num:
     github: eltony81/num.cr
-    version: ~> 1.23.0
+    version: ~> 1.24.0
 ```
+
+### Vectorized SIMD Mode (Apache Arrow)
+
+To enable SIMD offloading for Tensors utilizing the `ARROW` backend, compile your application with the `-Darrow` flag:
+
+```bash
+crystal build -Darrow --release src/your_app.cr
+```
+
+When `-Darrow` is enabled:
+- Standard math operations (`+`, `-`, `*`, `/`), in-place operations (`add!`, `subtract!`, `multiply!`, `divide!`), and unary negation (`-`) on ARROW-backed Tensors are automatically offloaded to the C++ Apache Arrow Compute Engine, utilizing optimized SIMD execution (AVX2, AVX-512, or ARM Neon depending on hardware).
+- File I/O for Parquet/Feather and CUDA device sharing is fully operational.
+
 
 Several third-party libraries are required to use certain features of `Num.cr`.
 They are:

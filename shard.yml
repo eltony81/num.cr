@@ -1,5 +1,5 @@
 name: num
-version: 1.24.1
+version: 1.24.2
 description: A high-performance scientific computing and n-dimensional Tensor library for Crystal.
 homepage: https://github.com/eltony81/num.cr
 repository: https://github.com/eltony81/num.cr
