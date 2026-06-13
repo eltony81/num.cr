@@ -56,9 +56,9 @@ class ARROW(T) < Num::Backend::Storage(T)
     {% elsif T == UInt8 %}
       Arrow::UInt8Array.new {{ *args }}
     {% elsif T == Int16 %}
-      Arrow::UInt8Array.new {{ *args }}
+      Arrow::Int16Array.new {{ *args }}
     {% elsif T == UInt16 %}
-      Arrow::UInt8Array.new {{ *args }}
+      Arrow::UInt16Array.new {{ *args }}
     {% elsif T == Int32 %}
       Arrow::Int32Array.new {{ *args }}
     {% elsif T == UInt32 %}
@@ -67,6 +67,10 @@ class ARROW(T) < Num::Backend::Storage(T)
       Arrow::Int64Array.new {{ *args }}
     {% elsif T == UInt64 %}
       Arrow::UInt64Array.new {{ *args }}
+    {% elsif T == Float32 %}
+      Arrow::FloatArray.new {{ *args }}
+    {% elsif T == Float64 %}
+      Arrow::DoubleArray.new {{ *args }}
     {% elsif T == String %}
       Arrow::StringArray.new {{ *args }}
     {% else %}

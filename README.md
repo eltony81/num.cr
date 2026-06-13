@@ -59,7 +59,7 @@ Add this to your applications `shard.yml`
 dependencies:
   num:
     github: eltony81/num.cr
-    version: ~> 1.13.0
+    version: ~> 1.23.0
 ```
 
 Several third-party libraries are required to use certain features of `Num.cr`.
