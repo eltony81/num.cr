@@ -17,7 +17,7 @@ dependencies:
     github: eltony81/opencl.cr
     version: ~> 0.4.0
   alea:
-    github: eltony81/alea
+    github: crystal-data/alea
   arrow:
     github: eltony81/arrow.cr
     version: ~> 1.4.0
