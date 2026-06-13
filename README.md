@@ -30,7 +30,7 @@ This fork is maintained to support control theory applications and robust comput
 - **Robust LAPACK Solver Integration**: Resolved alignment/solver issues in `solve` (calling LAPACK solver like `sgesv`/`dgesv`).
 - **Improved CI Pipelines**: Added support for standard Debian-based environments and official test containers by explicitly resolving dependency libraries (`openblas`, `clblast`, `arrow`, `atlas`, `libcblas-dev`).
 - **Apache Arrow Features & Performance (eltony81/arrow.cr 1.3.0)**:
-  - **Vectorized Compute Delegation**: Automatically offloads contiguous tensor arithmetic math operations (`add`, `subtract`, `multiply`, `divide`) directly to Arrow's SIMD-optimized C++ compute engine on the `ARROW` backend.
+  - **Vectorized Compute Delegation**: Automatically offloads contiguous tensor arithmetic math operations (`add`, `subtract`, `multiply`, `divide`), in-place operations (`add!`, `subtract!`, `multiply!`, `divide!`), and unary `negate` directly to Arrow's SIMD-optimized C++ compute engine on the `ARROW` backend.
   - **Feather & Parquet File I/O**: Exposes `Arrow::FeatherWriter` and `Arrow::ParquetWriter` for ultra-fast dataset saving and loading.
   - **CUDA GPU Memory Sharing**: Zero-copy GPU memory sharing via `Arrow::CudaDeviceManager` and `Arrow::CudaBuffer`.
   - **Flight Client/Server RPC**: High-throughput distributed data streaming via `Arrow::FlightClient` and `Arrow::FlightServer`.
