@@ -21,6 +21,8 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+require "../spec_helper"
+
 macro test_unary_operator(operator, backend = :cpu)
   it "Maps the {{ operator.id }} unary operator across one Tensor" do
     a = [1, 2, 3]

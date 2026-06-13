@@ -114,9 +114,20 @@ The library has been tested and run successfully with the following dependency a
 | **BLAS / CBLAS** | System Library | `3.12.1` | Basic Linear Algebra Subprograms |
 | **LAPACK** | System Library | `3.12.1` | Linear Algebra Package |
 | **OpenCL** | System Library | `2.3.4` (via `ocl-icd`) | GPU acceleration support |
-| **opencl.cr** | Shard | `0.2.1` | Crystal bindings for OpenCL |
+| **opencl.cr** | Shard | `0.4.0` | Crystal bindings for OpenCL |
 | **alea** | Shard | `0.3.0` | Random number generation library |
 | **arrow.cr** | Shard | `1.3.0` | Apache Arrow bindings |
+
+### OpenCL 2.0+ Acceleration Features
+
+Starting in version `1.25.1`, `num.cr` utilizes `opencl.cr` `~> 0.4.0` to leverage OpenCL 2.0+ APIs. This adds several features for high-performance GPU scientific computing:
+
+1. **Shared Virtual Memory (SVM)**: By using `clSVMAlloc` and `clSVMFree` under the hood when SVM is supported by your device, `num.cr` eliminates host-device buffer copying overhead. Hosts and devices share a single, unified virtual address space, enabling zero-copy pointer access and much faster page-mapped writes/reads.
+2. **Out-of-Order Execution Queues**: Device queues are created with out-of-order execution enabled (`CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE`). This enables the driver to execute independent kernels concurrently on the GPU without waiting for previous commands to finish, maximizing hardware utilization.
+3. **Generic Address Space**: Kernels compiled on OpenCL 2.0+ use generic pointer types (`generic const int * restrict const`) mapping memory spaces automatically, making indexing logic cleaner and more flexible.
+4. **Command Queue Customization**: Create custom queues with properties like high priority and profiling options.
+
+See [examples/opencl_features_demo.cr](file:///home/tony/Projects/num.cr/examples/opencl_features_demo.cr) for a complete example of GPU SVM allocations and out-of-order queue configuration.
 
 ## Just show me the code
 
