@@ -65,7 +65,7 @@ class ARROW(T) < Num::Backend::Storage(T)
       raw, _ = data.as(Arrow::DoubleArray).values
       raw.to_unsafe.unsafe_as(Pointer(T))
     {% else %}
-      {% raise "Unsupported type for ARROW backend" %}
+      raise "Unsupported type for ARROW backend"
     {% end %}
   end
 end

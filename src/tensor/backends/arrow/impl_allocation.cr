@@ -46,7 +46,7 @@ class ARROW(T) < Num::Backend::Storage(T)
     {% elsif T == String %}
       Arrow::StringArray.new {{ data.id }}
     {% else %}
-      {% raise "Invalid data type for Apache Arrow backed Tensor" %}
+      raise "Invalid data type for Apache Arrow backed Tensor"
     {% end %}
   end
 
@@ -74,7 +74,7 @@ class ARROW(T) < Num::Backend::Storage(T)
     {% elsif T == String %}
       Arrow::StringArray.new {{ *args }}
     {% else %}
-      {% raise "Invalid data type for Apache Arrow backed Tensor" %}
+      raise "Invalid data type for Apache Arrow backed Tensor"
     {% end %}
   end
 
@@ -193,7 +193,7 @@ class ARROW(T) < Num::Backend::Storage(T)
     {% elsif T == Float64 %}
       Arrow::DoubleArray.new({{ptr}}, add_ref: true)
     {% else %}
-      {% raise "Invalid data type for Apache Arrow backed Tensor" %}
+      raise "Invalid data type for Apache Arrow backed Tensor"
     {% end %}
   end
 

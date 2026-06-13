@@ -116,7 +116,7 @@ The library has been tested and run successfully with the following dependency a
 | **OpenCL** | System Library | `2.3.4` (via `ocl-icd`) | GPU acceleration support |
 | **opencl.cr** | Shard | `0.4.0` | Crystal bindings for OpenCL |
 | **alea** | Shard | `0.3.0` | Random number generation library |
-| **arrow.cr** | Shard | `1.3.0` | Apache Arrow bindings |
+| **arrow.cr** | Shard | `1.4.0` | Apache Arrow bindings |
 
 ### OpenCL 2.0+ Acceleration Features
 

@@ -20,4 +20,4 @@ dependencies:
     github: eltony81/alea
   arrow:
     github: eltony81/arrow.cr
-    branch: master
+    version: ~> 1.4.0
