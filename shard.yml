@@ -1,5 +1,5 @@
 name: num
-version: 1.29.1
+version: 1.29.2
 description: A high-performance scientific computing and n-dimensional Tensor library for Crystal.
 homepage: https://github.com/eltony81/num.cr
 repository: https://github.com/eltony81/num.cr
@@ -15,7 +15,7 @@ license: MIT
 dependencies:
   opencl:
     git: https://github.com/eltony81/opencl.cr.git
-    tag: v0.6.1
+    tag: v0.6.2
   alea:
     github: nin93/alea
   arrow:
