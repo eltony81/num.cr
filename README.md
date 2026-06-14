@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/eltony81/bottle](https://badges.gitter.im/eltony81/bottle.svg)](https://gitter.im/eltony81/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Crystal CI](https://github.com/eltony81/num.cr/workflows/Crystal%20CI/badge.svg)
-![Version](https://img.shields.io/badge/version-1.26.0-blue)
+![Version](https://img.shields.io/badge/version-1.30.0-blue)
 
 Num.cr is the core shard needed for scientific computing with Crystal
 
@@ -29,7 +29,7 @@ This fork is maintained to support control theory applications and robust comput
   - Cleaned up implicit OpenBLAS library linking in `cblas.cr` to prevent collision issues across different platform/distro environments.
 - **Robust LAPACK Solver Integration**: Resolved alignment/solver issues in `solve` (calling LAPACK solver like `sgesv`/`dgesv`).
 - **Improved CI Pipelines**: Added support for standard Debian-based environments and official test containers by explicitly resolving dependency libraries (`openblas`, `clblast`, `arrow`, `atlas`, `libcblas-dev`).
-- **Apache Arrow Features & Performance (eltony81/arrow.cr 1.3.0)**:
+- **Apache Arrow Features & Performance (eltony81/arrow.cr 1.4.0)**:
   - **Vectorized Compute Delegation**: Automatically offloads contiguous tensor arithmetic math operations (`add`, `subtract`, `multiply`, `divide`), in-place operations (`add!`, `subtract!`, `multiply!`, `divide!`), and unary `negate` directly to Arrow's SIMD-optimized C++ compute engine on the `ARROW` backend.
   - **Feather & Parquet File I/O**: Exposes `Arrow::FeatherWriter` and `Arrow::ParquetWriter` for ultra-fast dataset saving and loading.
   - **CUDA GPU Memory Sharing**: Zero-copy GPU memory sharing via `Arrow::CudaDeviceManager` and `Arrow::CudaBuffer`.
@@ -59,7 +59,7 @@ Add this to your applications `shard.yml`
 dependencies:
   num:
     github: eltony81/num.cr
-    version: ~> 1.24.0
+    version: ~> 1.30.0
 ```
 
 ### Vectorized SIMD Mode (Apache Arrow)
@@ -584,4 +584,22 @@ open an issue to add it!
 - Updated `arrow.cr` dependency to `v1.4.0`.
 - Reverted `alea` dependency from the `eltony81/alea` fork back to the upstream `crystal-data/alea`, eliminating one maintained fork.
 - Updated OpenCL 2.0+ documentation with full SVM and queue customization examples.
+
+### v1.27.0 — Complex Eigenvalue Stability
+- Integrated dynamic workspace queries for LAPACK eigenvalue routines.
+- Improved stability for `eigvals_c` and `eig_c` on large datasets.
+
+### v1.28.0 — OpenCL 2.0+ Cleanup
+- Migrated OpenCL 2.0+ extensions to `eltony81/opencl.cr` v0.5.0.
+- Cleaned up internal workaround for SVM and sub-buffers.
+
+### v1.29.x — OpenCL v0.6 Integration
+- Optimized SVM management with Fine-Grained support (reduced map/unmap overhead).
+- Added sub-buffer alignment validation using hardware-specific alignment queries.
+- Introduced `Num.opencl_info` for detailed hardware diagnostics.
+
+### v1.30.0 — Advanced OpenCL Fork Features
+- Support for loading OpenCL kernels from SPIR-V (IL) binary bytes.
+- Optimized `ClContext` initialization via `Cl.first_gpu_defaults`.
+- Documented complete delta between standard OpenCL and the `eltony81` fork.
 
