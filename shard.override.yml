@@ -1,5 +1,0 @@
-dependencies:
-  opencl:
-    path: ../opencl.cr
-  arrow:
-    path: ../arrow.cr
