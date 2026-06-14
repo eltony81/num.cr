@@ -19,5 +19,5 @@ dependencies:
   alea:
     github: nin93/alea
   arrow:
-    git: https://github.com/crystal-data/arrow.cr.git
+    git: https://github.com/eltony81/arrow.cr.git
     tag: v1.4.0
