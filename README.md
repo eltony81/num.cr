@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/eltony81/bottle](https://badges.gitter.im/eltony81/bottle.svg)](https://gitter.im/eltony81/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Crystal CI](https://github.com/eltony81/num.cr/workflows/Crystal%20CI/badge.svg)
-![Version](https://img.shields.io/badge/version-1.30.0-blue)
+![Version](https://img.shields.io/badge/version-1.31.0-blue)
 
 Num.cr is the core shard needed for scientific computing with Crystal
 
@@ -59,7 +59,7 @@ Add this to your applications `shard.yml`
 dependencies:
   num:
     github: eltony81/num.cr
-    version: ~> 1.30.0
+    version: ~> 1.31.0
 ```
 
 ### Vectorized SIMD Mode (Apache Arrow)
@@ -602,4 +602,8 @@ open an issue to add it!
 - Support for loading OpenCL kernels from SPIR-V (IL) binary bytes.
 - Optimized `ClContext` initialization via `Cl.first_gpu_defaults`.
 - Documented complete delta between standard OpenCL and the `eltony81` fork.
+
+### v1.31.0 — Modern OpenCL Milestone
+- Updated `opencl.cr` dependency to `v0.7.0` (Modern OpenCL Milestone).
+- Synchronized all repository versioning points (README badges, installation instructions).
 
