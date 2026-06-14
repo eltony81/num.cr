@@ -187,7 +187,7 @@ class Tensor(T, S)
           byte_offset = (origin_elements * sizeof(T)).to_u64
 
           # Validation for sub-buffer alignment
-          align = Cl.mem_base_addr_align(Num::ClContext.instance.device) / 8
+          align = Cl.mem_base_addr_align(Num::ClContext.instance.device) // 8
           if byte_offset % align != 0
             raise "Sub-tensor byte offset (#{byte_offset}) must be aligned to #{align} bytes for this device"
           end
