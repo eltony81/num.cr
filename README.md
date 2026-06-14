@@ -120,14 +120,20 @@ The library has been tested and run successfully with the following dependency a
 
 ### OpenCL 2.0+ Acceleration Features
 
-Starting in version `1.26.0`, `num.cr` utilizes `opencl.cr` `~> 0.4.0` to leverage OpenCL 2.0+ APIs. This adds several features for high-performance GPU scientific computing:
+Starting in version `1.26.0`, `num.cr` utilizes `opencl.cr` to leverage OpenCL 2.0+ APIs. This adds several features for high-performance GPU scientific computing.
 
-1. **Shared Virtual Memory (SVM)**: By using `clSVMAlloc` and `clSVMFree` under the hood when SVM is supported by your device, `num.cr` eliminates host-device buffer copying overhead. Hosts and devices share a single, unified virtual address space, enabling zero-copy pointer access and much faster page-mapped writes/reads.
-2. **Out-of-Order Execution Queues**: Device queues are created with out-of-order execution enabled (`CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE`). This enables the driver to execute independent kernels concurrently on the GPU without waiting for previous commands to finish, maximizing hardware utilization.
-3. **Generic Address Space**: Kernels compiled on OpenCL 2.0+ use generic pointer types (`generic const int * restrict const`) mapping memory spaces automatically, making indexing logic cleaner and more flexible.
-4. **Command Queue Customization**: Create custom queues with properties like high priority and profiling options.
+#### eltony81/opencl.cr Fork (v0.6+) - Advanced Optimizations
 
-See [examples/opencl_features_demo.cr](file:///home/tony/Projects/num.cr/examples/opencl_features_demo.cr) for a complete example of GPU SVM allocations and out-of-order queue configuration.
+Version `1.29.0+` of `num.cr` migrates to the `eltony81/opencl.cr` fork to unlock exclusive performance and diagnostic features not available in the standard bindings:
+
+1. **Fine-Grained SVM Support**: Automatically detects and utilizes Fine-Grained Shared Virtual Memory. On supported hardware, `num.cr` completely bypasses `map_svm` and `unmap_svm` overhead, allowing the host to read/write GPU memory pointers directly and concurrently without driver-level synchronization.
+2. **Sub-buffer Alignment Validation**: Rigorous validation of memory offsets using `Cl.mem_base_addr_align`. This prevents hard-to-debug `CL_INVALID_VALUE` errors by ensuring zero-copy sub-tensors are perfectly aligned to your hardware's requirements.
+3. **Command Buffer Readiness**: Initial support for `cl_khr_command_buffer` detection, enabling the potential for recorded kernel execution (future feature).
+4. **SPIR-V IL Loading**: Support for creating programs from SPIR-V Intermediate Language binaries, enabling faster startup and cross-compiler compatibility.
+5. **Advanced Diagnostics**: Use `Num.opencl_info` to get a comprehensive report of your GPU capabilities, memory limits, and supported extensions.
+6. **Simplified Device Selection**: Uses `Cl.first_gpu_defaults` and `Cl.single_device_defaults` for more robust and cleaner platform/device initialization.
+
+See [examples/opencl_fork_features.cr](examples/opencl_fork_features.cr) for a demonstration of these advanced fork-specific capabilities.
 
 ## Just show me the code
 

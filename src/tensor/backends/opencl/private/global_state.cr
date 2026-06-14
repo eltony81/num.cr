@@ -70,14 +70,17 @@ class Num::ClContext
   end
 
   class_getter instance : Num::Internal::ClInfo do
-    platform = Cl.first_platform
-    device = {% if flag?(:opencl_any) %}
-               Cl.get_devices(platform)[0]
-             {% else %}
-               Cl.get_devices(platform, LibCL::CL_DEVICE_TYPE_GPU)[0]
-             {% end %}
-    context = Cl.create_context([device])
-    queue = create_optimized_queue(context, device)
+    device, context, queue = {% if flag?(:opencl_any) %}
+                               Cl.single_device_defaults
+                             {% else %}
+                               Cl.first_gpu_defaults
+                             {% end %}
+    
+    # Check for optimized queue properties if requested, 
+    # but first_gpu_defaults provides a good baseline.
+    # We can still wrap it if we want custom properties:
+    # queue = create_optimized_queue(context, device)
+    
     Num::Internal::ClInfo.new(device, context, queue)
   end
 

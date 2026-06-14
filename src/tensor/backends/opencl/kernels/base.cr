@@ -55,6 +55,15 @@ abstract class Num::Kernel(T)
     @kernel = Cl.create_kernel(@program, @@name)
   end
 
+  # Initializes a kernel from a SPIR-V Intermediate Language binary.
+  # This avoids runtime compilation of OpenCL C source strings.
+  def self.from_il(il_bytes : Bytes, kernel_name : String)
+    program = Cl.create_program_with_il(Num::ClContext.instance.context, il_bytes)
+    Cl.build_on(program, Num::ClContext.instance.device)
+    kernel = Cl.create_kernel(program, kernel_name)
+    {program, kernel}
+  end
+
   def get_program(dtype : String) : String
     "
     int opencl_getIndexOfElementID(
