@@ -17,7 +17,7 @@ dependencies:
     git: https://github.com/eltony81/opencl.cr.git
     tag: v0.4.0
   alea:
-    github: eltony81/alea
+    github: nin93/alea
   arrow:
     git: https://github.com/crystal-data/arrow.cr.git
     tag: v1.4.0
