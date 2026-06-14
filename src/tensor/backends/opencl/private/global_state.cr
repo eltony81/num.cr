@@ -22,6 +22,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 require "opencl"
+require "./opencl2_ext"
 
 # :nodoc:
 class Num::Internal::ClInfo
