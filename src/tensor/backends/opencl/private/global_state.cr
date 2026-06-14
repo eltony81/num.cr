@@ -29,9 +29,11 @@ class Num::Internal::ClInfo
   getter context : LibCL::ClContext
   getter queue : LibCL::ClCommandQueue
   property? svm_supported : Bool
+  property? fine_grain_svm_supported : Bool
 
   def initialize(@device : LibCL::ClDeviceId, @context : LibCL::ClContext, @queue : LibCL::ClCommandQueue)
     @svm_supported = Cl.svm_supported?(@device)
+    @fine_grain_svm_supported = Cl.supports_fine_grain_svm?(@device)
   end
 end
 

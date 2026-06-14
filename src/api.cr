@@ -156,6 +156,7 @@ require "./nn/backends/opencl/optimizers"
 
 require "./num/exceptions"
 require "./num/aliases"
+require "./num/opencl_info"
 
 require "./einsum/contractors/pair"
 require "./einsum/contractors/singleton"

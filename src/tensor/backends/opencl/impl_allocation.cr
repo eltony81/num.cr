@@ -37,7 +37,11 @@ class OCL(T) < Num::Backend::Storage(T)
   # ```
   private def allocate_buffer(size : UInt64, dtype : U.class) : LibCL::ClMem | Cl::SVMPointer forall U
     if Num::ClContext.instance.svm_supported?
-      ptr = LibCL.cl_svm_alloc(Num::ClContext.instance.context, 1_u64 << 0, size * sizeof(U), 0_u32)
+      flags = 1_u64 << 0 # CL_MEM_READ_WRITE
+      if Num::ClContext.instance.fine_grain_svm_supported?
+        flags |= 1_u64 << 10 # CL_MEM_SVM_FINE_GRAIN_BUFFER
+      end
+      ptr = LibCL.cl_svm_alloc(Num::ClContext.instance.context, flags, size * sizeof(U), 0_u32)
       if ptr.nil?
         raise "Failed to allocate SVM pointer"
       end
@@ -73,9 +77,13 @@ class OCL(T) < Num::Backend::Storage(T)
     @strides = metadata_to_buffer(Num::Internal.shape_to_strides(shape, order))
     @total_size = shape.product
     if (data_ptr = @data).is_a?(Cl::SVMPointer)
-      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      end
       data_ptr.raw.as(T*).map!(shape.product) { value }
-      Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+      end
     else
       Cl.fill(Num::ClContext.instance.queue, data_ptr, value, shape.product.to_u64)
     end
@@ -87,9 +95,13 @@ class OCL(T) < Num::Backend::Storage(T)
     @strides = metadata_to_buffer(strides.map &.to_i)
     @total_size = shape.product
     if (data_ptr = @data).is_a?(Cl::SVMPointer)
-      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      end
       data_ptr.raw.as(T*).map!(shape.product) { value }
-      Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+      end
     else
       Cl.fill(Num::ClContext.instance.queue, data_ptr, value, shape.product.to_u64)
     end
@@ -101,9 +113,13 @@ class OCL(T) < Num::Backend::Storage(T)
     @strides = metadata_to_buffer(strides.map &.to_i)
     @total_size = shape.product
     if (data_ptr = @data).is_a?(Cl::SVMPointer)
-      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, data_ptr.raw, (shape.product * sizeof(T)).to_u64)
+      end
       data_ptr.raw.as(T*).copy_from(hostptr, shape.product)
-      Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.unmap_svm(Num::ClContext.instance.queue, data_ptr.raw)
+      end
     else
       Cl.write(Num::ClContext.instance.queue, hostptr, data_ptr, (shape.product * sizeof(T)).to_u64)
     end
@@ -126,9 +142,13 @@ class OCL(T) < Num::Backend::Storage(T)
     end
     buf = allocate_buffer(arr.size.to_u64, Int32)
     if buf.is_a?(Cl::SVMPointer)
-      Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, buf.raw, (arr.size * sizeof(Int32)).to_u64)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.map_svm(Num::ClContext.instance.queue, LibCL::CL_TRUE, LibCL::ClMapFlags::WRITE.value, buf.raw, (arr.size * sizeof(Int32)).to_u64)
+      end
       buf.raw.as(Int32*).copy_from(arr.to_unsafe, arr.size)
-      Cl.unmap_svm(Num::ClContext.instance.queue, buf.raw)
+      unless Num::ClContext.instance.fine_grain_svm_supported?
+        Cl.unmap_svm(Num::ClContext.instance.queue, buf.raw)
+      end
     else
       Cl.write(Num::ClContext.instance.queue, arr.to_unsafe, buf, (arr.size * sizeof(Int32)).to_u64)
     end
@@ -165,6 +185,13 @@ class Tensor(T, S)
         data_mem = data_store.data
         if data_mem.is_a?(LibCL::ClMem)
           byte_offset = (origin_elements * sizeof(T)).to_u64
+
+          # Validation for sub-buffer alignment
+          align = Cl.mem_base_addr_align(Num::ClContext.instance.device) / 8
+          if byte_offset % align != 0
+            raise "Sub-tensor byte offset (#{byte_offset}) must be aligned to #{align} bytes for this device"
+          end
+
           byte_size = (shape.product * sizeof(T)).to_u64
           sub_mem = Cl.create_sub_buffer(data_mem, byte_offset, byte_size)
           new_storage = OCL(T).new(sub_mem, shape, strides)
