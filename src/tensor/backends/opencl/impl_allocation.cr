@@ -35,20 +35,27 @@ class OCL(T) < Num::Backend::Storage(T)
   # ```
   # OCL.new([100], Num::RowMajor)
   # ```
+  # SVM allocation is opt-in via the `-Dopencl_svm` flag: kernel dispatch and
+  # ClBlast routines take `cl_mem` buffers, so SVM-backed tensors can only be
+  # used where the full SVM argument-passing path is supported
   private def allocate_buffer(size : UInt64, dtype : U.class) : LibCL::ClMem | Cl::SVMPointer forall U
-    if Num::ClContext.instance.svm_supported?
-      flags = 1_u64 << 0 # CL_MEM_READ_WRITE
-      if Num::ClContext.instance.fine_grain_svm_supported?
-        flags |= 1_u64 << 10 # CL_MEM_SVM_FINE_GRAIN_BUFFER
+    {% if flag?(:opencl_svm) %}
+      if Num::ClContext.instance.svm_supported?
+        flags = 1_u64 << 0 # CL_MEM_READ_WRITE
+        if Num::ClContext.instance.fine_grain_svm_supported?
+          flags |= 1_u64 << 10 # CL_MEM_SVM_FINE_GRAIN_BUFFER
+        end
+        ptr = LibCL.cl_svm_alloc(Num::ClContext.instance.context, flags, size * sizeof(U), 0_u32)
+        if ptr.nil?
+          raise "Failed to allocate SVM pointer"
+        end
+        Cl::SVMPointer.new(ptr)
+      else
+        Cl.buffer(Num::ClContext.instance.context, size, dtype: U)
       end
-      ptr = LibCL.cl_svm_alloc(Num::ClContext.instance.context, flags, size * sizeof(U), 0_u32)
-      if ptr.nil?
-        raise "Failed to allocate SVM pointer"
-      end
-      Cl::SVMPointer.new(ptr)
-    else
+    {% else %}
       Cl.buffer(Num::ClContext.instance.context, size, dtype: U)
-    end
+    {% end %}
   end
 
   def initialize(@data : LibCL::ClMem | Cl::SVMPointer, shape : Array(Int), strides : Array(Int))

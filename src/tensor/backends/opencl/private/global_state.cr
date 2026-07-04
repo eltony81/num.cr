@@ -73,14 +73,21 @@ class Num::ClContext
     device, context, queue = {% if flag?(:opencl_any) %}
                                Cl.single_device_defaults
                              {% else %}
-                               Cl.first_gpu_defaults
+                               begin
+                                 Cl.first_gpu_defaults
+                               rescue
+                                 # No GPU device on any platform: fall back to
+                                 # the first available device of any type
+                                 # (e.g. a CPU OpenCL implementation like PoCL)
+                                 Cl.single_device_defaults
+                               end
                              {% end %}
-    
-    # Check for optimized queue properties if requested, 
+
+    # Check for optimized queue properties if requested,
     # but first_gpu_defaults provides a good baseline.
     # We can still wrap it if we want custom properties:
     # queue = create_optimized_queue(context, device)
-    
+
     Num::Internal::ClInfo.new(device, context, queue)
   end
 

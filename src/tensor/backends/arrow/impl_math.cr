@@ -46,23 +46,13 @@ module Num
     ) : Tensor forall U, V
       {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
         if a.flags.contiguous? && b.flags.contiguous? && a.shape == b.shape
-          op_name = case {{operator.stringify}}
-                    when "+" then "add"
-                    when "-" then "subtract"
-                    when "*" then "multiply"
-                    when "/" then "divide"
-                    else nil
-                    end
-
-          if op_name
-            Arrow.initialize_compute
-            a_datum = Arrow::Datum.new(a.data.data)
-            b_datum = Arrow::Datum.new(b.data.data)
-            res_datum = Arrow::Function.execute(op_name, [a_datum, b_datum])
-            res_arr_ptr = res_datum.to_array.to_unsafe
-            storage = ARROW(U).new(res_arr_ptr, a.shape, a.strides)
-            return Tensor(U, ARROW(U)).new(storage, a.shape)
-          end
+          Arrow.initialize_compute
+          a_datum = Arrow::Datum.new(a.data.data)
+          b_datum = Arrow::Datum.new(b.data.data)
+          res_datum = Arrow::Function.execute({{name.stringify}}, [a_datum, b_datum])
+          res_arr_ptr = res_datum.to_array.to_unsafe
+          storage = ARROW(U).new(res_arr_ptr, a.shape, a.strides)
+          return Tensor(U, ARROW(U)).new(storage, a.shape)
         end
       {% end %}
 
@@ -96,39 +86,29 @@ module Num
     ) : Nil forall U, V
       {% if name.id == "add" || name.id == "subtract" || name.id == "multiply" || name.id == "divide" %}
         if a.flags.contiguous? && b.flags.contiguous? && a.shape == b.shape
-          op_name = case {{operator.stringify}}
-                    when "+" then "add"
-                    when "-" then "subtract"
-                    when "*" then "multiply"
-                    when "/" then "divide"
-                    else nil
-                    end
+          Arrow.initialize_compute
+          a_datum = Arrow::Datum.new(a.data.data)
+          b_datum = Arrow::Datum.new(b.data.data)
+          res_datum = Arrow::Function.execute({{name.stringify}}, [a_datum, b_datum])
+          res_arr = res_datum.to_array
 
-          if op_name
-            Arrow.initialize_compute
-            a_datum = Arrow::Datum.new(a.data.data)
-            b_datum = Arrow::Datum.new(b.data.data)
-            res_datum = Arrow::Function.execute(op_name, [a_datum, b_datum])
-            res_arr = res_datum.to_array
-            
-            {% for item in [
-              {"Int8", "Int8"},
-              {"UInt8", "UInt8"},
-              {"Int16", "Int16"},
-              {"UInt16", "UInt16"},
-              {"Int32", "Int32"},
-              {"UInt32", "UInt32"},
-              {"Int64", "Int64"},
-              {"UInt64", "UInt64"},
-              {"Float", "Float32"},
-              {"Double", "Float64"}
-            ] %}
-              if res_arr.is_a?(Arrow::{{item[0].id}}Array)
-                res_arr.raw_pointer.copy_to(a.to_unsafe.as(Pointer({{item[1].id}})), a.size)
-                return
-              end
-            {% end %}
-          end
+          {% for item in [
+            {"Int8", "Int8"},
+            {"UInt8", "UInt8"},
+            {"Int16", "Int16"},
+            {"UInt16", "UInt16"},
+            {"Int32", "Int32"},
+            {"UInt32", "UInt32"},
+            {"Int64", "Int64"},
+            {"UInt64", "UInt64"},
+            {"Float", "Float32"},
+            {"Double", "Float64"}
+          ] %}
+            if res_arr.is_a?(Arrow::{{item[0].id}}Array)
+              res_arr.raw_pointer.copy_to(a.to_unsafe.as(Pointer({{item[1].id}})), a.size)
+              return
+            end
+          {% end %}
         end
       {% end %}
 

@@ -15,9 +15,9 @@ license: MIT
 dependencies:
   opencl:
     git: https://github.com/eltony81/opencl.cr.git
-    tag: v0.7.0
+    tag: v0.7.1
   alea:
     github: nin93/alea
   arrow:
     git: https://github.com/eltony81/arrow.cr.git
-    tag: v1.4.0
+    tag: v1.4.1
