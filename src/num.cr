@@ -1,6 +1,6 @@
 require "./api"
 
 module Num
-  VERSION = "1.7.7"
+  VERSION = "1.31.1"
 
 end

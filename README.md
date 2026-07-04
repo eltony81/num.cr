@@ -2,7 +2,7 @@
 
 [![Join the chat at https://gitter.im/eltony81/bottle](https://badges.gitter.im/eltony81/bottle.svg)](https://gitter.im/eltony81/bottle?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![Crystal CI](https://github.com/eltony81/num.cr/workflows/Crystal%20CI/badge.svg)
-![Version](https://img.shields.io/badge/version-1.31.0-blue)
+![Version](https://img.shields.io/badge/version-1.31.1-blue)
 
 Num.cr is the core shard needed for scientific computing with Crystal
 
@@ -59,7 +59,7 @@ Add this to your applications `shard.yml`
 dependencies:
   num:
     github: eltony81/num.cr
-    version: ~> 1.31.0
+    version: ~> 1.31.1
 ```
 
 ### Vectorized SIMD Mode (Apache Arrow)
@@ -607,3 +607,10 @@ open an issue to add it!
 - Updated `opencl.cr` dependency to `v0.7.0` (Modern OpenCL Milestone).
 - Synchronized all repository versioning points (README badges, installation instructions).
 
+
+### v1.31.1 — Backend Correctness Fixes
+- Fixed Arrow SIMD offload never triggering: the compute-engine fast path for `add`/`subtract`/`multiply`/`divide` silently fell back to scalar loops due to a macro operator-name mismatch.
+- OpenCL context initialization now falls back to the first available device of any type when no GPU is present (CPU OpenCL implementations like PoCL, CI containers).
+- SVM allocation is now opt-in via the `-Dopencl_svm` flag: auto-detected SVM produced buffers incompatible with kernel dispatch and ClBlast, breaking all compute paths on SVM-capable devices.
+- Updated `opencl.cr` to `v0.7.1` (adds `clSetKernelArgSVMPointer` binding) and `arrow.cr` to `v1.4.1` (fixes GLib error checks, Feather writer API, Parquet writer ABI).
+- Synchronized `Num::VERSION` with the shard version.
